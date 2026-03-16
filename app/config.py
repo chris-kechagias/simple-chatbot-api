@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     db_name: str = "chatbot_db"
     start_time: float = time.time()
     openai_api_key: str = ""
-    openai_model: str = "gpt-4o-mini"
+    openai_model: str = "gpt-5-mini"
     openai_max_tokens: int = 1000
     openai_temperature: float = 0.7
 
