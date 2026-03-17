@@ -10,7 +10,7 @@ Creates the FastAPI app, registers routers, and manages the database lifespan.
 from fastapi import FastAPI
 
 # Local/First-Party Imports
-from app import config
+from app.config import config
 
 app = FastAPI(
     title=config.app_name,
