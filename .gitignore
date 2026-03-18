@@ -43,3 +43,7 @@ Thumbs.db
 
 # Temp Files
 temp-notes.md
+
+# Logs
+logs/
+*.log
