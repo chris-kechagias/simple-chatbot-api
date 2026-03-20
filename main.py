@@ -21,6 +21,7 @@ from app.middleware import (
     setup_logging,  # noqa: F401,
     validation_exception_handler,
 )
+from app.routers import health_router, home_router
 from app.utils.errors import AppException, DatabaseException
 
 logger = logging.getLogger(__name__)
@@ -55,6 +56,8 @@ app = FastAPI(
 )
 
 # TODO: app include routers here
+app.include_router(health_router)
+app.include_router(home_router)
 
 app.add_exception_handler(AppException, app_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
