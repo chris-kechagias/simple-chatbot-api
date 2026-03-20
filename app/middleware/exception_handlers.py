@@ -8,26 +8,23 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 # Local/First-Party Imports
-from ..utils.errors import AppException
+from ..utils.errors import AppException, ErrorDetail, ErrorResponse
 
 logger = logging.getLogger(__name__)
 
 
 def create_error_response(exception: AppException) -> Dict[str, Any]:
     """Helper function to create a standardized error response from an AppException."""
-    response = {
-        "success": False,
-        "error": {
-            "code": exception.error_code,
-            "message": exception.message,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        },
-    }
+    response = ErrorResponse(
+        error=ErrorDetail(
+            code=exception.error_code,
+            message=exception.message,
+            timestamp=datetime.now(timezone.utc),
+            details=exception.details,
+        )
+    )
 
-    if exception.details:
-        response["error"]["details"] = exception.details
-
-    return response
+    return response.model_dump()
 
 
 async def app_exception_handler(request, exception: AppException):
