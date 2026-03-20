@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     start_time: float = time.time()
     openai_api_key: str = ""
     openai_model: str = "gpt-5-mini"
+    openai_system_prompt: str = ""
     openai_max_tokens: int = 1000
     openai_temperature: float = 0.7
 
