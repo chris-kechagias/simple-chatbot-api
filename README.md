@@ -8,7 +8,7 @@
 
 ## Status
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-0.0.0-blue?style=flat-square)
 ![Last Commit](https://img.shields.io/github/last-commit/chris-kechagias/simple-chatbot-api?style=flat-square)
 ![Commits](https://img.shields.io/github/commit-activity/m/chris-kechagias/simple-chatbot-api?style=flat-square&label=Activity)
 ![License](https://img.shields.io/github/license/chris-kechagias/simple-chatbot-api?style=flat-square)
