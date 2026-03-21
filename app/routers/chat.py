@@ -6,7 +6,7 @@ from fastapi import APIRouter, status
 
 # Local/First-Party Imports
 from ..controllers import chat_controller
-from ..database import SessionDep
+from ..core import SessionDep
 from ..models import ChatRequest, ChatResponse
 
 router = APIRouter(prefix="/chat", tags=["Chat"])

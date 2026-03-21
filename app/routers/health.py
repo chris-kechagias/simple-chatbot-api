@@ -5,7 +5,7 @@ import time
 from fastapi import APIRouter
 
 # Local/First-Party Imports
-from ..config import config
+from ..core.config import config
 from ..models import HealthResponse
 
 router = APIRouter(tags=["System"])

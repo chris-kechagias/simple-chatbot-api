@@ -2,7 +2,7 @@
 from sqlmodel import Field, SQLModel
 
 # Local/First-Party Imports
-from ..config import config
+from ..core.config import config
 
 
 class HealthResponse(SQLModel):
