@@ -8,7 +8,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 # Local/First-Party Imports
-from ..utils.errors import AppException, ErrorDetail, ErrorResponse
+from . import AppException, ErrorDetail, ErrorResponse
 
 logger = logging.getLogger(__name__)
 

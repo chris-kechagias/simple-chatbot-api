@@ -2,7 +2,7 @@
 from fastapi import APIRouter
 
 # Local/First-Party Imports
-from ..config import config
+from ..core.config import config
 
 router = APIRouter(tags=["System"])
 

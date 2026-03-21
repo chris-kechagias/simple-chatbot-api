@@ -6,8 +6,8 @@ from typing import Any, Callable
 import openai
 
 # Local/First-Party Imports
-from ..config import config
-from ..utils.errors import OpenAIServiceException
+from ..core.config import config
+from ..core.errors import OpenAIServiceException
 
 
 def handle_openai_errors(func: Callable) -> Callable:

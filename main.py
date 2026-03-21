@@ -13,16 +13,15 @@ from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 
 # Local/First-Party Imports
-from app.config import config
-from app.database import create_db_and_tables
-from app.middleware import (
+from app.core import config, create_db_and_tables, setup_logging  # noqa: F401
+from app.core.errors import (
+    AppException,
+    DatabaseException,
     app_exception_handler,
     generic_exception_handler,
-    setup_logging,  # noqa: F401,
     validation_exception_handler,
 )
 from app.routers import chat_router, health_router, home_router
-from app.utils.errors import AppException, DatabaseException
 
 logger = logging.getLogger(__name__)
 

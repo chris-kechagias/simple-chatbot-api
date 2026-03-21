@@ -6,11 +6,10 @@ from datetime import datetime, timezone
 from sqlmodel import select
 
 # Local/First-Party Imports
-from ..config import config
-from ..database import SessionDep
+from ..core import SessionDep, config
+from ..core.errors import ConversationNotFoundException
 from ..models import ChatRequest, ChatResponse, Conversation, Message
 from ..services.openai_service import get_chat_completion
-from ..utils.errors import ConversationNotFoundException
 
 
 async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
