@@ -20,9 +20,9 @@
 
 A FastAPI-powered conversational AI service using OpenAI, with conversation memory and RAG-based retail inventory assistance. Part of a larger portfolio project — built incrementally, PR by PR.
 
-**Planned phases:**
-- Phase 1 — Single chat endpoint
-- Phase 2 — Conversation memory (PostgreSQL)
+**Phases:**
+- ~~Phase 1 — Single chat endpoint with conversation memory (PostgreSQL)~~ ✅
+- Phase 2 — Context window management & conversation summarisation
 - Phase 3 — RAG over retail inventory data
 
 ---
@@ -33,14 +33,11 @@ A FastAPI-powered conversational AI service using OpenAI, with conversation memo
 simple-chatbot-api/
 ├── main.py                  # App launcher
 ├── app/
-│   ├── config.py            # Settings & environment
-│   ├── database.py          # DB session management
-│   ├── routers/             # HTTP layer
-│   ├── controllers/         # Business logic
+│   ├── core/                # Infrastructure (config, database, logging, errors)
+│   ├── routers/             # HTTP layer — thin, no business logic
+│   ├── controllers/         # Business logic & orchestration
 │   ├── services/            # External API clients (OpenAI, etc.)
-│   ├── models/              # Pydantic & SQLModel schemas
-│   ├── middleware/          # Logging & error handlers
-│   └── utils/               # Custom exceptions & helpers
+│   └── models/              # Pydantic & SQLModel schemas
 └── tests/                   # Test suite
 ```
 
