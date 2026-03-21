@@ -15,14 +15,12 @@ from ..utils.errors import ConversationNotFoundException
 
 async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
     """
-    Handles incoming chat requests, interacts with the OpenAI service, and manages conversation state.
-
-    This function performs the following steps:
-    1. Validates the incoming request data.
-    2. Retrieves or creates a Conversation record in the database.
-    3. Calls the OpenAI service to get a response based on the user's message.
-    4. Saves the Message record to the database, including metadata like tokens used and latency.
-    5. Returns a structured ChatResponse containing the AI's reply and conversation history.
+    Controller function to handle chat requests.
+    This function manages both new conversations and existing conversations
+    based on the presence of a conversation ID in the request.
+    It interacts with the OpenAI service to get AI responses and manages conversation state in the database.
+    If a conversation ID is provided but not found in the database, it raises a ConversationNotFoundException,
+    which is handled by the global error handler to return an appropriate error response to the client.
     """
     if not request.conversation_id:
         # Create a new conversation if no conversation_id is provided
