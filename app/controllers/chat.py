@@ -1,6 +1,7 @@
 # Standard Library Imports
 import time
 from datetime import datetime, timezone
+from uuid import UUID
 
 # Third-Party Imports
 from sqlmodel import select
@@ -8,8 +9,14 @@ from sqlmodel import select
 # Local/First-Party Imports
 from ..core import SessionDep, config
 from ..core.errors import ConversationNotFoundException
-from ..models import ChatRequest, ChatResponse, Conversation, Message
-from ..services.openai_service import get_chat_completion
+from ..models import (
+    ChatRequest,
+    ChatResponse,
+    Conversation,
+    ConversationSummary,
+    Message,
+)
+from ..services import get_chat_completion
 
 
 async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
@@ -75,3 +82,43 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
         history=history + [message_record],
         **message_record.model_dump(exclude={"id", "conversation_id", "user_message"}),
     )
+
+
+async def get_chat_by_id(conversation_id: UUID, db: SessionDep) -> list[Message]:
+    """
+    Retrieves a conversation and its message history by conversation ID.
+
+    Raises ConversationNotFoundException if the conversation does not exist.
+    """
+    conversation = db.get(Conversation, conversation_id)
+    if not conversation:
+        raise ConversationNotFoundException(conversation_id)
+
+    return db.exec(
+        select(Message).where(Message.conversation_id == conversation.id)
+    ).all()
+
+
+async def get_all_conversations_for_user(
+    user_id: UUID, db: SessionDep
+) -> list[ConversationSummary]:
+    """
+    Retrieves all conversations for a given user.
+
+    Returns a list of ConversationSummary objects, which include conversation ID, title, and timestamps.
+    """
+    conversations = db.exec(
+        select(Conversation)
+        .where(Conversation.user_id == user_id)
+        .order_by(Conversation.updated_at.desc())
+    ).all()
+
+    return [
+        ConversationSummary(
+            id=conv.id,
+            title=conv.title,
+            created_at=conv.created_at,
+            updated_at=conv.updated_at,
+        )
+        for conv in conversations
+    ]
