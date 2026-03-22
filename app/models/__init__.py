@@ -1,4 +1,4 @@
-from .chat import ChatRequest, ChatResponse, Conversation, Message
+from .chat import ChatRequest, ChatResponse, Conversation, ConversationSummary, Message
 from .health import HealthResponse
 
 __all__ = [
@@ -7,4 +7,5 @@ __all__ = [
     "Conversation",
     "Message",
     "HealthResponse",
+    "ConversationSummary",
 ]
