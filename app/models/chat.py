@@ -23,6 +23,15 @@ class Conversation(SQLModel, table=True):
     )
 
 
+class ConversationSummary(SQLModel):
+    """Response schema for conversation list items. Excludes user_id."""
+
+    id: UUID
+    title: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+
 class Message(SQLModel, table=True):
     """Database model for individual messages within a conversation."""
 
