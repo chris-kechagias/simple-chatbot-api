@@ -5,11 +5,53 @@ from uuid import UUID
 from fastapi import APIRouter, status
 
 # Local/First-Party Imports
-from ..controllers import chat_controller
+from ..controllers import (
+    chat_controller,
+    get_all_conversations_for_user,
+    get_chat_by_id,
+)
 from ..core import SessionDep
-from ..models import ChatRequest, ChatResponse
+from ..models import ChatRequest, ChatResponse, ConversationSummary, Message
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
+
+# ----------------------------------------------------
+# 1. READ ROUTES
+# ----------------------------------------------------
+
+
+@router.get(
+    "/conversations/{user_id}",
+    response_model=list[ConversationSummary],
+    status_code=status.HTTP_200_OK,
+    summary="Get all conversations for a user",
+    description="Retrieve a list of all conversations for a given user ID. "
+    "Returns a summary of each conversation, including the conversation ID, title, and timestamps.",
+)
+async def get_conversations_for_user_router(
+    user_id: UUID, db: SessionDep
+) -> list[ConversationSummary]:
+    return await get_all_conversations_for_user(user_id, db)
+
+
+@router.get(
+    "/{conversation_id}",
+    response_model=list[Message],
+    status_code=status.HTTP_200_OK,
+    responses={404: {"description": "Conversation not found"}},
+    summary="Get conversation history",
+    description="Retrieve the full message history for a given conversation ID. "
+    "Returns a list of messages in the order they were sent, including both user messages and AI responses.",
+)
+async def get_chat_history_router(
+    conversation_id: UUID, db: SessionDep
+) -> list[Message]:
+    return await get_chat_by_id(conversation_id, db)
+
+
+# ----------------------------------------------------
+# 2. WRITE ROUTES - Create and Continue Conversations
+# ----------------------------------------------------
 
 
 @router.post(
