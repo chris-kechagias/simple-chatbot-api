@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     openai_system_prompt: str = ""
     openai_max_tokens: int = 1000
     openai_temperature: float = 0.7
+    context_window_size: int = 15
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -50,7 +50,9 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
 
     # Build the message array for the OpenAI API, starting with a system prompt and the conversation history
     messages = [{"role": "system", "content": config.openai_system_prompt}]
-    for msg in history:
+    for msg in history[
+        -config.context_window_size :
+    ]:  # Include only the last N messages for context
         messages.append({"role": "user", "content": msg.user_message})
         messages.append({"role": "assistant", "content": msg.ai_response})
     messages.append({"role": "user", "content": request.user_message})
@@ -79,7 +81,7 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
     return ChatResponse(
         conversation_id=conversation.id,
         title=conversation.title,
-        history=history + [message_record],
+        history=history[-config.context_window_size :] + [message_record],
         **message_record.model_dump(exclude={"id", "conversation_id", "user_message"}),
     )
 
