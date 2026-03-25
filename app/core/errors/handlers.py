@@ -24,7 +24,7 @@ def create_error_response(exception: AppException) -> Dict[str, Any]:
         )
     )
 
-    return response.model_dump()
+    return response.model_dump(mode="json")
 
 
 async def app_exception_handler(request, exception: AppException):

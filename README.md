@@ -45,7 +45,40 @@ simple-chatbot-api/
 
 ## Installation
 
-> Setup and run instructions will be added once the core API is complete.
+### Prerequisites
+- Python 3.11+
+- PostgreSQL
+- An OpenAI API key
+
+### Setup
+
+1. Clone the repo and install dependencies:
+```bash
+git clone https://github.com/chris-kechagias/simple-chatbot-api.git
+cd simple-chatbot-api
+uv sync
+```
+
+2. Copy the example env file and fill in your values:
+```bash
+cp .env.example .env
+```
+
+3. Run the API locally:
+```bash
+task dev
+```
+
+### First Request
+
+This API has no authentication yet. Every request requires a `user_id` UUID that you generate yourself — think of it as your user identifier until auth is added.
+
+Generate one:
+```bash
+python -c "import uuid; print(uuid.uuid4())"
+```
+
+Use that UUID as `user_id` in all your requests. For new conversations, set `conversation_id` to `null` or omit it entirely.
 
 ---
 

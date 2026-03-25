@@ -45,7 +45,10 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
         if not conversation:
             raise ConversationNotFoundException(request.conversation_id)
         history = db.exec(
-            select(Message).where(Message.conversation_id == conversation.id)
+            select(Message)
+            .where(Message.conversation_id == conversation.id)
+            .order_by(Message.created_at.asc())
+            .limit(config.context_window_size)
         ).all()
 
     # Build the message array for the OpenAI API, starting with a system prompt and the conversation history
@@ -81,7 +84,7 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
     return ChatResponse(
         conversation_id=conversation.id,
         title=conversation.title,
-        history=history[-config.context_window_size :] + [message_record],
+        history=[Message.model_validate(msg) for msg in history[-config.context_window_size:]] + [message_record],
         **message_record.model_dump(exclude={"id", "conversation_id", "user_message"}),
     )
 

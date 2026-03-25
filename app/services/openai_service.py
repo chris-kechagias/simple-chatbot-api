@@ -4,6 +4,7 @@ from typing import Any, Callable
 
 # Third-Party Imports
 import openai
+from openai import AsyncOpenAI
 
 # Local/First-Party Imports
 from ..core.config import config
@@ -41,13 +42,15 @@ def handle_openai_errors(func: Callable) -> Callable:
     return wrapper
 
 
+client = AsyncOpenAI(api_key=config.openai_api_key)
+
+
 @handle_openai_errors
 async def get_chat_completion(messages: list[dict]) -> Any:
     """Sends a chat completion request to the OpenAI API."""
-    response = await openai.chat.completions.create(
+    response = await client.chat.completions.create(
         model=config.openai_model,
         messages=messages,
-        max_tokens=config.openai_max_tokens,
-        temperature=config.openai_temperature,
+        max_completion_tokens=config.openai_max_completion_tokens,
     )
     return response

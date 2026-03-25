@@ -18,8 +18,7 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-5-mini"
     openai_system_prompt: str = ""
-    openai_max_tokens: int = 1000
-    openai_temperature: float = 0.7
+    openai_max_completion_tokens: int = 1000
     context_window_size: int = 15
 
     model_config = SettingsConfigDict(
