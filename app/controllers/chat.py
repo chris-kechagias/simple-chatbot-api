@@ -47,29 +47,33 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
         history = db.exec(
             select(Message)
             .where(Message.conversation_id == conversation.id)
-            .order_by(Message.created_at.asc())
+            .order_by(Message.created_at.desc())
             .limit(config.context_window_size)
         ).all()
 
+        history = list(reversed(history))
+
     # Build the message array for the OpenAI API, starting with a system prompt and the conversation history
     messages = [{"role": "system", "content": config.openai_system_prompt}]
-    for msg in history[
-        -config.context_window_size :
-    ]:  # Include only the last N messages for context
+    for msg in history:
         messages.append({"role": "user", "content": msg.user_message})
         messages.append({"role": "assistant", "content": msg.ai_response})
     messages.append({"role": "user", "content": request.user_message})
 
     # Measure latency for the OpenAI API call
-    start = time.time()
+    start = time.perf_counter()
     ai_response = await get_chat_completion(messages)
-    latency_ms = (time.time() - start) * 1000
+    latency_ms = (time.perf_counter() - start) * 1000
 
     # Create a new Message record with the user's message, AI response, and metadata
     message_record = Message(
         conversation_id=conversation.id,
         user_message=request.user_message,
-        ai_response=ai_response.choices[0].message.content,
+        ai_response=(
+            ai_response.choices[0].message.content
+            if ai_response.choices and ai_response.choices[0].message.content
+            else ""
+        ),
         ai_model=ai_response.model,
         tokens_used=ai_response.usage.total_tokens,
         latency_ms=latency_ms,
@@ -84,11 +88,7 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
     return ChatResponse(
         conversation_id=conversation.id,
         title=conversation.title,
-        history=[
-            Message.model_validate(msg)
-            for msg in history[-config.context_window_size :]
-        ]
-        + [message_record],
+        history=[Message.model_validate(msg) for msg in history] + [message_record],
         **message_record.model_dump(exclude={"id", "conversation_id", "user_message"}),
     )
 
