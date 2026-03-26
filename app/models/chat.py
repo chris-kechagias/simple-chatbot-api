@@ -4,6 +4,7 @@ from typing import Optional
 from uuid import UUID, uuid4
 
 # Third-Party Imports
+from pydantic import BaseModel
 from sqlalchemy import func
 from sqlmodel import Column, DateTime, Field, SQLModel
 
@@ -45,6 +46,10 @@ class Message(SQLModel, table=True):
     created_at: datetime = Field(
         default=None, sa_column=Column(DateTime, server_default=func.now())
     )
+
+
+class UpdateTitleRequest(BaseModel):
+    title: str
 
 
 class ChatRequest(SQLModel):

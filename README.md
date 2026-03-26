@@ -18,11 +18,11 @@
 
 ## About
 
-A FastAPI-powered conversational AI service using OpenAI, with conversation memory and RAG-based retail inventory assistance. Part of a larger portfolio project — built incrementally, PR by PR.
+A FastAPI-powered conversational AI service using OpenAI, with full conversation management and RAG-based retail inventory assistance. Part of a larger portfolio project — built incrementally, PR by PR.
 
 **Phases:**
-- ~~Phase 1 — Single chat endpoint with conversation memory (PostgreSQL)~~ ✅
-- Phase 2 — Context window management & conversation summarisation
+- ~~Phase 1 — Core chat API with conversation memory (PostgreSQL)~~ ✅
+- Phase 2 — Full CRUD, context window, auto-title, prompt management & streaming -- in progress
 - Phase 3 — RAG over retail inventory data
 
 ---

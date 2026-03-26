@@ -84,12 +84,18 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
     return ChatResponse(
         conversation_id=conversation.id,
         title=conversation.title,
-        history=[Message.model_validate(msg) for msg in history[-config.context_window_size:]] + [message_record],
+        history=[
+            Message.model_validate(msg)
+            for msg in history[-config.context_window_size :]
+        ]
+        + [message_record],
         **message_record.model_dump(exclude={"id", "conversation_id", "user_message"}),
     )
 
 
-async def get_chat_by_id(conversation_id: UUID, db: SessionDep) -> list[Message]:
+async def get_chat_by_id_controller(
+    conversation_id: UUID, db: SessionDep
+) -> list[Message]:
     """
     Retrieves a conversation and its message history by conversation ID.
 
@@ -104,7 +110,7 @@ async def get_chat_by_id(conversation_id: UUID, db: SessionDep) -> list[Message]
     ).all()
 
 
-async def get_all_conversations_for_user(
+async def get_all_conversations_for_user_controller(
     user_id: UUID, db: SessionDep
 ) -> list[ConversationSummary]:
     """
@@ -127,3 +133,51 @@ async def get_all_conversations_for_user(
         )
         for conv in conversations
     ]
+
+
+async def patch_conversation_controller(
+    conversation_id: UUID, title: str, db: SessionDep
+) -> ConversationSummary:
+    """
+    Updates the title of an existing conversation.
+
+    Raises ConversationNotFoundException if the conversation does not exist.
+    """
+    conversation = db.get(Conversation, conversation_id)
+    if not conversation:
+        raise ConversationNotFoundException(conversation_id)
+
+    conversation.title = title
+    conversation.updated_at = datetime.now(timezone.utc)
+    db.add(conversation)
+    db.commit()
+    db.refresh(conversation)
+
+    return ConversationSummary(
+        id=conversation.id,
+        title=conversation.title,
+        created_at=conversation.created_at,
+        updated_at=conversation.updated_at,
+    )
+
+
+async def delete_conversation_controller(conversation_id: UUID, db: SessionDep) -> None:
+    """
+    Deletes a conversation and all its associated messages.
+
+    Raises ConversationNotFoundException if the conversation does not exist.
+    """
+    conversation = db.get(Conversation, conversation_id)
+    if not conversation:
+        raise ConversationNotFoundException(conversation_id)
+
+    # Delete all messages associated with the conversation
+    messages = db.exec(
+        select(Message).where(Message.conversation_id == conversation.id)
+    ).all()
+    for message in messages:
+        db.delete(message)
+    db.flush()
+    # Delete the conversation itself
+    db.delete(conversation)
+    db.commit()
