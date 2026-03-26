@@ -1,4 +1,11 @@
-from .chat import ChatRequest, ChatResponse, Conversation, ConversationSummary, Message
+from .chat import (
+    ChatRequest,
+    ChatResponse,
+    Conversation,
+    ConversationSummary,
+    Message,
+    UpdateTitleRequest,
+)
 from .health import HealthResponse
 
 __all__ = [
@@ -8,4 +15,5 @@ __all__ = [
     "Message",
     "HealthResponse",
     "ConversationSummary",
+    "UpdateTitleRequest",
 ]
