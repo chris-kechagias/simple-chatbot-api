@@ -1,6 +1,6 @@
 # Standard Library Imports
 import functools
-from typing import Any, Callable
+from typing import Awaitable, Callable, TypeVar
 
 # Third-Party Imports
 import openai
@@ -10,14 +10,20 @@ from openai import AsyncOpenAI
 from ..core.config import config
 from ..core.errors import OpenAIServiceException
 
+T = TypeVar("T")
 
-def handle_openai_errors(func: Callable) -> Callable:
+
+def handle_openai_errors(
+    func: Callable[..., Awaitable[T]],
+) -> Callable[..., Awaitable[T]]:
     """Decorator to handle OpenAI API errors gracefully."""
 
     @functools.wraps(func)
-    async def wrapper(*args, **kwargs) -> Any:
+    async def wrapper(*args, **kwargs) -> T:
         try:
             return await func(*args, **kwargs)
+        except OpenAIServiceException:
+            raise
         except openai.APITimeoutError:
             raise OpenAIServiceException(
                 message="OpenAI API request timed out. Please try again later.",
@@ -46,11 +52,25 @@ client = AsyncOpenAI(api_key=config.openai_api_key)
 
 
 @handle_openai_errors
-async def get_chat_completion(messages: list[dict]) -> Any:
+async def get_chat_completion(messages: list[dict]) -> dict:
     """Sends a chat completion request to the OpenAI API."""
     response = await client.chat.completions.create(
         model=config.openai_model,
         messages=messages,
         max_completion_tokens=config.openai_max_completion_tokens,
     )
-    return response
+    choice = response.choices[0] if response.choices else None
+    content = choice.message.content if choice and choice.message else ""
+
+    if not content:
+        raise OpenAIServiceException(
+            message="OpenAI returned an empty response.",
+            status_code=502,
+            error_code="EMPTY_RESPONSE",
+        )
+
+    return {
+        "content": content,
+        "model": response.model,
+        "tokens": response.usage.total_tokens if response.usage else 0,
+    }
