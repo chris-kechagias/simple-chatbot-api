@@ -1,5 +1,5 @@
 from .config import config
-from .database import SessionDep, create_db_and_tables, get_session
+from .database import SessionDep, create_db_and_tables, engine, get_session
 from .logging import setup_logging
 
 __all__ = [
@@ -8,4 +8,5 @@ __all__ = [
     "create_db_and_tables",
     "get_session",
     "SessionDep",
+    "engine",
 ]

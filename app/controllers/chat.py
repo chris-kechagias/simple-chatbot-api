@@ -1,4 +1,5 @@
 # Standard Library Imports
+import asyncio
 import time
 from datetime import datetime, timezone
 from uuid import UUID
@@ -7,7 +8,7 @@ from uuid import UUID
 from sqlmodel import select
 
 # Local/First-Party Imports
-from ..core import SessionDep, config
+from ..core import SessionDep, config, engine
 from ..core.errors import ConversationNotFoundException
 from ..models import (
     ChatRequest,
@@ -16,7 +17,7 @@ from ..models import (
     ConversationSummary,
     Message,
 )
-from ..services import get_chat_completion
+from ..services import get_chat_completion, update_conversation_summary
 from ..utils import trim_messages_by_tokens
 
 
@@ -63,11 +64,27 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
         messages.append({"role": "assistant", "content": msg.ai_response})
     messages.append({"role": "user", "content": request.user_message})
 
-    messages = trim_messages_by_tokens(messages, config.openai_max_input_tokens)
+    # Trim messages if they exceed the token limit, and update the conversation summary with evicted messages
+    trimmed_messages = trim_messages_by_tokens(messages, config.openai_max_input_tokens)
+
+    # Identify which messages were evicted (excluding the system prompt and the latest user message)
+    evicted = [m for m in messages[1:-1] if m not in trimmed_messages]
+
+    if evicted:
+        # Update the conversation summary in the background with the evicted messages
+        asyncio.create_task(
+            update_conversation_summary(engine, conversation.id, evicted)
+        )
+
+    if conversation.summary:
+        # If there is an existing summary, append it to the content of the oldest message in the trimmed context
+        trimmed_messages[0]["content"] += (
+            f"\n\nPAST CONTEXT SUMMARY: {conversation.summary}"
+        )
 
     # Measure latency for the OpenAI API call
     start = time.perf_counter()
-    ai_response = await get_chat_completion(messages)
+    ai_response = await get_chat_completion(trimmed_messages)
     latency_ms = (time.perf_counter() - start) * 1000
 
     # Create a new Message record with the user's message, AI response, and metadata
