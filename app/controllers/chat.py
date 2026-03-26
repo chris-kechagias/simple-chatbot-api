@@ -17,6 +17,7 @@ from ..models import (
     Message,
 )
 from ..services import get_chat_completion
+from ..utils import trim_messages_by_tokens
 
 
 async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
@@ -61,6 +62,8 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
         messages.append({"role": "user", "content": msg.user_message})
         messages.append({"role": "assistant", "content": msg.ai_response})
     messages.append({"role": "user", "content": request.user_message})
+
+    messages = trim_messages_by_tokens(messages, config.openai_max_input_tokens)
 
     # Measure latency for the OpenAI API call
     start = time.perf_counter()

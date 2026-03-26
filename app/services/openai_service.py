@@ -1,6 +1,7 @@
 # Standard Library Imports
 import asyncio
 import functools
+import logging
 from typing import Awaitable, Callable, TypeVar
 
 # Third-Party Imports
@@ -8,7 +9,7 @@ import openai
 from openai import AsyncOpenAI
 
 # Local/First-Party Imports
-from ..core import config, logging
+from ..core import config
 from ..core.errors import OpenAIServiceException
 
 # Initialize logger for this module

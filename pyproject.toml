@@ -15,6 +15,7 @@ dependencies = [
     "python-json-logger>=4.0.0",
     "sqlmodel>=0.0.34",
     "uvicorn[standard]>=0.41.0",
+    "tiktoken>=0.7.0",
 ]
 
 [dependency-groups]
