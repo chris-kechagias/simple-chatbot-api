@@ -177,6 +177,7 @@ async def delete_conversation_controller(conversation_id: UUID, db: SessionDep) 
     ).all()
     for message in messages:
         db.delete(message)
+    db.flush()
     # Delete the conversation itself
     db.delete(conversation)
     db.commit()
