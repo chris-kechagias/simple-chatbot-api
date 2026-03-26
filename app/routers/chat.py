@@ -7,11 +7,19 @@ from fastapi import APIRouter, status
 # Local/First-Party Imports
 from ..controllers import (
     chat_controller,
-    get_all_conversations_for_user,
-    get_chat_by_id,
+    delete_conversation_controller,
+    get_all_conversations_for_user_controller,
+    get_chat_by_id_controller,
+    patch_conversation_controller,
 )
 from ..core import SessionDep
-from ..models import ChatRequest, ChatResponse, ConversationSummary, Message
+from ..models import (
+    ChatRequest,
+    ChatResponse,
+    ConversationSummary,
+    Message,
+    UpdateTitleRequest,
+)
 
 router = APIRouter(prefix="/chat", tags=["Chat"])
 
@@ -31,7 +39,7 @@ router = APIRouter(prefix="/chat", tags=["Chat"])
 async def get_conversations_for_user_router(
     user_id: UUID, db: SessionDep
 ) -> list[ConversationSummary]:
-    return await get_all_conversations_for_user(user_id, db)
+    return await get_all_conversations_for_user_controller(user_id, db)
 
 
 @router.get(
@@ -46,11 +54,11 @@ async def get_conversations_for_user_router(
 async def get_chat_history_router(
     conversation_id: UUID, db: SessionDep
 ) -> list[Message]:
-    return await get_chat_by_id(conversation_id, db)
+    return await get_chat_by_id_controller(conversation_id, db)
 
 
 # ----------------------------------------------------
-# 2. WRITE ROUTES - Create and Continue Conversations
+# 2. WRITE ROUTES - (POST/PATCH/DELETE)
 # ----------------------------------------------------
 
 
@@ -104,3 +112,32 @@ async def continue_chat_router(
     """
     request.conversation_id = conversation_id
     return await chat_controller(request, db)
+
+
+@router.patch(
+    "/{conversation_id}/title",
+    response_model=ConversationSummary,
+    status_code=status.HTTP_200_OK,
+    responses={404: {"description": "Conversation not found"}},
+    summary="Update conversation title",
+    description="Endpoint to update the title of an existing conversation. "
+    "The conversation ID is provided in the URL path, and the new title is included in the request body. "
+    "Returns the updated conversation summary.",
+)
+async def update_conversation_title_router(
+    conversation_id: UUID, request: UpdateTitleRequest, db: SessionDep
+) -> ConversationSummary:
+    return await patch_conversation_controller(conversation_id, request.title, db)
+
+
+@router.delete(
+    "/{conversation_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={404: {"description": "Conversation not found"}},
+    summary="Delete a conversation",
+    description="Endpoint to delete an existing conversation and all its associated messages. "
+    "The conversation ID is provided in the URL path. "
+    "Returns a 204 No Content status on successful deletion.",
+)
+async def delete_conversation_router(conversation_id: UUID, db: SessionDep) -> None:
+    return await delete_conversation_controller(conversation_id, db)
