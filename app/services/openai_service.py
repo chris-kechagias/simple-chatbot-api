@@ -57,11 +57,14 @@ client = AsyncOpenAI(api_key=config.openai_api_key)
 
 
 @handle_openai_errors
-async def get_chat_completion(messages: list[dict], max_retries: int = 2) -> dict:
+async def get_chat_completion(
+    messages: list[dict], model: str | None = None, max_retries: int = 2
+) -> dict:
     """Sends a chat completion request to the OpenAI API."""
+    model = model or config.openai_model
     for attempt in range(max_retries + 1):
         response = await client.chat.completions.create(
-            model=config.openai_model,
+            model=model,
             messages=messages,
             max_completion_tokens=config.openai_max_completion_tokens,
         )
@@ -84,7 +87,7 @@ async def get_chat_completion(messages: list[dict], max_retries: int = 2) -> dic
                     "attempt": attempt + 1,
                     "max_retries": max_retries,
                     "next_retry_delay": wait_time,
-                    "model": config.openai_model,
+                    "model": model,
                 },
             )
             await asyncio.sleep(wait_time)

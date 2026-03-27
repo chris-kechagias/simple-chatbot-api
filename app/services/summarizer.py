@@ -2,6 +2,7 @@ import logging
 
 from sqlmodel import Session
 
+from ..core import config
 from ..models.chat import Conversation
 from .openai_service import get_chat_completion
 
@@ -37,7 +38,10 @@ async def update_conversation_summary(
             """
 
             # Use a cheaper model or standard gpt-5-mini
-            response = await get_chat_completion([{"role": "user", "content": prompt}])
+            response = await get_chat_completion(
+                model=config.openai_utility_model,
+                messages=[{"role": "user", "content": prompt}],
+            )
             new_summary = response.get("content")
 
             if new_summary:

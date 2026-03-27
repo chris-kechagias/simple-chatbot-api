@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 # Third-Party Imports
 from pydantic import BaseModel
-from sqlalchemy import func, Text
+from sqlalchemy import Text, func
 from sqlmodel import Column, DateTime, Field, SQLModel
 
 

@@ -44,7 +44,8 @@ def trim_messages_by_tokens(
         count_tokens([system_prompt] + history + [latest_user_msg]) > max_input_tokens
         and history
     ):
-        # Pop the oldest message in the history buffer
+        # Remove both user and assistant messages
+        history.pop(0)
         history.pop(0)
 
     return [system_prompt] + history + [latest_user_msg]

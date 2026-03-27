@@ -31,7 +31,6 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
 
     Raises ConversationNotFoundException if the provided conversation_id does not exist.
     """
-
     if not request.conversation_id:
         # Create a new conversation if no conversation_id is provided
         conversation = Conversation(
