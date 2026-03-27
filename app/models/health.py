@@ -1,7 +1,10 @@
-# Third-Party Imports
+"""
+This module defines the data models related to the health check endpoint of the API.
+
+"""
+
 from sqlmodel import Field, SQLModel
 
-# Local/First-Party Imports
 from ..core.config import config
 
 

@@ -1,10 +1,15 @@
-# Standard Library Imports
+"""
+This module defines the API routes for chat-related operations, including creating new conversations,
+continuing existing conversations, retrieving conversation history, updating conversation titles,
+and deleting conversations. Each route is designed to handle specific HTTP methods and endpoints,
+and interacts with the corresponding controller functions to perform the necessary business logic.
+
+"""
+
 from uuid import UUID
 
-# Third-Party Imports
 from fastapi import APIRouter, status
 
-# Local/First-Party Imports
 from ..controllers import (
     chat_controller,
     delete_conversation_controller,

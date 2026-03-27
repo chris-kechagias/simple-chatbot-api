@@ -1,3 +1,10 @@
+"""
+This module defines the Summarizer service,
+which is responsible for updating the conversation summary
+with messages that have been evicted from the active context.
+
+"""
+
 import logging
 
 from sqlmodel import Session

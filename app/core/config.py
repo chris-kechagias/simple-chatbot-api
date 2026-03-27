@@ -1,7 +1,12 @@
-# Standard Library Imports
+"""
+This module defines the application settings using Pydantic's BaseSettings.
+It loads configuration from environment variables and .env files,
+providing a single source of truth for all configurable parameters in the app.
+
+"""
+
 import time
 
-# Third-Party Imports
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

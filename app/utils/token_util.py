@@ -1,3 +1,13 @@
+"""
+Token management and context window utilities for LLM orchestration.
+
+This module provides tools to calculate message token counts and perform
+lossy context compression (trimming). It ensures that outbound payloads
+to OpenAI models stay within strict hardware/API limits while preserving
+the most relevant (recent) conversation history.
+
+"""
+
 import logging
 
 import tiktoken

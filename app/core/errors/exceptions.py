@@ -5,12 +5,10 @@ Each exception includes a message, HTTP status code, error code, and optional de
 
 """
 
-# Standard Library Imports
 from datetime import datetime
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-# Third-Party Imports
 from pydantic import BaseModel
 
 

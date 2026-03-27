@@ -1,13 +1,20 @@
-# Standard Library Imports
+"""
+Controller functions for chat-related operations,
+including handling new and existing conversations,
+retrieving conversation history and managing conversation metadata.
+This module defines the core business logic for processing chat requests,
+interacting with the database, and communicating with the OpenAI API.
+It includes error handling to ensure robust operation and clear feedback to API clients.
+
+"""
+
 import asyncio
 import time
 from datetime import datetime, timezone
 from uuid import UUID
 
-# Third-Party Imports
 from sqlmodel import select
 
-# Local/First-Party Imports
 from ..core import SessionDep, config, engine
 from ..core.errors import ConversationNotFoundException
 from ..models import (

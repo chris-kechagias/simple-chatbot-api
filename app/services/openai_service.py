@@ -1,14 +1,18 @@
-# Standard Library Imports
+"""
+This module defines the OpenAIService, which provides an abstraction layer for interacting with the OpenAI API.
+It includes functions for sending chat completion requests and handling responses,
+as well as robust error handling to manage various failure scenarios gracefully.
+
+"""
+
 import asyncio
 import functools
 import logging
 from typing import Awaitable, Callable, TypeVar
 
-# Third-Party Imports
 import openai
 from openai import AsyncOpenAI
 
-# Local/First-Party Imports
 from ..core import config
 from ..core.errors import OpenAIServiceException
 

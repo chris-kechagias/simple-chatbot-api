@@ -1,7 +1,11 @@
-# Third-Party Imports
+"""
+This module defines the API route for the root endpoint,
+which provides basic information about the service.
+
+"""
+
 from fastapi import APIRouter
 
-# Local/First-Party Imports
 from ..core.config import config
 
 router = APIRouter(tags=["System"])

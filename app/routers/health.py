@@ -1,10 +1,13 @@
-# Standard Library Imports
+"""
+This module defines the API route for the health check endpoint,
+which allows clients to verify that the service is running and healthy.
+
+"""
+
 import time
 
-# Third-Party Imports
 from fastapi import APIRouter
 
-# Local/First-Party Imports
 from ..core.config import config
 from ..models import HealthResponse
 

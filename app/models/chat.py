@@ -1,9 +1,15 @@
-# Standard Library Imports
+"""
+This module defines the database models and Pydantic schemas for the chat application.
+It includes SQLModel classes for Conversations and Messages,
+which represent the structure of the database tables,
+as well as Pydantic models for request and response validation in the API endpoints.
+
+"""
+
 from datetime import datetime
 from typing import Optional
 from uuid import UUID, uuid4
 
-# Third-Party Imports
 from pydantic import BaseModel
 from sqlalchemy import Text, func
 from sqlmodel import Column, DateTime, Field, SQLModel

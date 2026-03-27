@@ -1,4 +1,12 @@
-# Standard Library Imports
+"""
+This module sets up logging for the application,
+configuring both console and file handlers with JSON formatting.
+It uses the python-json-logger library to produce structured logs that include timestamps,
+log levels, and module names, making it easier to analyze logs in production environments
+like Render or when running locally.
+
+"""
+
 import logging
 import os
 import sys

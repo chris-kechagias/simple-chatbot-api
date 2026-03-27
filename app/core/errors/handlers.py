@@ -1,13 +1,19 @@
-# Standard Library Imports
+"""
+This module defines the error handling logic for the application.
+It includes custom exception handlers for our `AppException` class,
+as well as a generic handler for unexpected exceptions and a specific handler for validation errors from FastAPI/Pydantic.
+Each handler logs the error with relevant context and returns a standardized JSON response containing the error code,
+message, timestamp, and any additional details.
+
+"""
+
 import logging
 from datetime import datetime, timezone
 from typing import Any, Dict
 
-# Third-Party Imports
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-# Local/First-Party Imports
 from . import AppException, ErrorDetail, ErrorResponse
 
 logger = logging.getLogger(__name__)
