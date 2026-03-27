@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 # Third-Party Imports
 from pydantic import BaseModel
-from sqlalchemy import func
+from sqlalchemy import Text, func
 from sqlmodel import Column, DateTime, Field, SQLModel
 
 
@@ -15,6 +15,7 @@ class Conversation(SQLModel, table=True):
     id: Optional[UUID] = Field(default_factory=uuid4, primary_key=True)
     user_id: UUID
     title: Optional[str] = None
+    summary: Optional[str] = Field(default=None, sa_column=Column(Text))
     created_at: datetime = Field(
         default=None, sa_column=Column(DateTime, server_default=func.now())
     )

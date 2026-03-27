@@ -5,6 +5,7 @@
 ![SQLModel](https://img.shields.io/badge/SQLModel-ORM-red?style=flat-square)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?style=flat-square&logo=postgresql)
 ![OpenAI](https://img.shields.io/badge/OpenAI-API-412991?style=flat-square&logo=openai)
+![uv](https://img.shields.io/badge/uv-package%20manager-blueviolet?style=flat-square)
 
 ## Status
 
@@ -36,7 +37,8 @@ simple-chatbot-api/
 │   ├── core/                # Infrastructure (config, database, logging, errors)
 │   ├── routers/             # HTTP layer — thin, no business logic
 │   ├── controllers/         # Business logic & orchestration
-│   ├── services/            # External API clients (OpenAI, etc.)
+│   ├── services/            # External API clients (OpenAI, summarizer)
+│   ├── utils/               # Shared utilities (token counting, etc.)
 │   └── models/              # Pydantic & SQLModel schemas
 └── tests/                   # Test suite
 ```

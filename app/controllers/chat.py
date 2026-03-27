@@ -1,4 +1,5 @@
 # Standard Library Imports
+import asyncio
 import time
 from datetime import datetime, timezone
 from uuid import UUID
@@ -7,7 +8,7 @@ from uuid import UUID
 from sqlmodel import select
 
 # Local/First-Party Imports
-from ..core import SessionDep, config
+from ..core import SessionDep, config, engine
 from ..core.errors import ConversationNotFoundException
 from ..models import (
     ChatRequest,
@@ -16,7 +17,8 @@ from ..models import (
     ConversationSummary,
     Message,
 )
-from ..services import get_chat_completion
+from ..services import get_chat_completion, update_conversation_summary
+from ..utils import trim_messages_by_tokens
 
 
 async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
@@ -29,7 +31,6 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
 
     Raises ConversationNotFoundException if the provided conversation_id does not exist.
     """
-
     if not request.conversation_id:
         # Create a new conversation if no conversation_id is provided
         conversation = Conversation(
@@ -47,31 +48,51 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
         history = db.exec(
             select(Message)
             .where(Message.conversation_id == conversation.id)
-            .order_by(Message.created_at.asc())
+            .order_by(Message.created_at.desc())
             .limit(config.context_window_size)
         ).all()
 
+        history = list(reversed(history))
+
     # Build the message array for the OpenAI API, starting with a system prompt and the conversation history
     messages = [{"role": "system", "content": config.openai_system_prompt}]
-    for msg in history[
-        -config.context_window_size :
-    ]:  # Include only the last N messages for context
+    for msg in history:
+        if not msg.ai_response:
+            continue
         messages.append({"role": "user", "content": msg.user_message})
         messages.append({"role": "assistant", "content": msg.ai_response})
     messages.append({"role": "user", "content": request.user_message})
 
+    # Trim messages if they exceed the token limit, and update the conversation summary with evicted messages
+    trimmed_messages = trim_messages_by_tokens(messages, config.openai_max_input_tokens)
+
+    # Identify which messages were evicted (excluding the system prompt and the latest user message)
+    evicted = [m for m in messages[1:-1] if m not in trimmed_messages]
+
+    if evicted:
+        # Update the conversation summary in the background with the evicted messages
+        asyncio.create_task(
+            update_conversation_summary(engine, conversation.id, evicted)
+        )
+
+    if conversation.summary:
+        # If there is an existing summary, append it to the content of the oldest message in the trimmed context
+        trimmed_messages[0]["content"] += (
+            f"\n\nPAST CONTEXT SUMMARY: {conversation.summary}"
+        )
+
     # Measure latency for the OpenAI API call
-    start = time.time()
-    ai_response = await get_chat_completion(messages)
-    latency_ms = (time.time() - start) * 1000
+    start = time.perf_counter()
+    ai_response = await get_chat_completion(trimmed_messages)
+    latency_ms = (time.perf_counter() - start) * 1000
 
     # Create a new Message record with the user's message, AI response, and metadata
     message_record = Message(
         conversation_id=conversation.id,
         user_message=request.user_message,
-        ai_response=ai_response.choices[0].message.content,
-        ai_model=ai_response.model,
-        tokens_used=ai_response.usage.total_tokens,
+        ai_response=ai_response["content"],
+        ai_model=ai_response["model"],
+        tokens_used=ai_response["tokens"],
         latency_ms=latency_ms,
     )
 
@@ -84,11 +105,7 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
     return ChatResponse(
         conversation_id=conversation.id,
         title=conversation.title,
-        history=[
-            Message.model_validate(msg)
-            for msg in history[-config.context_window_size :]
-        ]
-        + [message_record],
+        history=[Message.model_validate(msg) for msg in history] + [message_record],
         **message_record.model_dump(exclude={"id", "conversation_id", "user_message"}),
     )
 

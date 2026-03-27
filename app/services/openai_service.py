@@ -1,23 +1,34 @@
 # Standard Library Imports
+import asyncio
 import functools
-from typing import Any, Callable
+import logging
+from typing import Awaitable, Callable, TypeVar
 
 # Third-Party Imports
 import openai
 from openai import AsyncOpenAI
 
 # Local/First-Party Imports
-from ..core.config import config
+from ..core import config
 from ..core.errors import OpenAIServiceException
 
+# Initialize logger for this module
+logger = logging.getLogger(__name__)
 
-def handle_openai_errors(func: Callable) -> Callable:
+T = TypeVar("T")
+
+
+def handle_openai_errors(
+    func: Callable[..., Awaitable[T]],
+) -> Callable[..., Awaitable[T]]:
     """Decorator to handle OpenAI API errors gracefully."""
 
     @functools.wraps(func)
-    async def wrapper(*args, **kwargs) -> Any:
+    async def wrapper(*args, **kwargs) -> T:
         try:
             return await func(*args, **kwargs)
+        except OpenAIServiceException:
+            raise
         except openai.APITimeoutError:
             raise OpenAIServiceException(
                 message="OpenAI API request timed out. Please try again later.",
@@ -46,11 +57,47 @@ client = AsyncOpenAI(api_key=config.openai_api_key)
 
 
 @handle_openai_errors
-async def get_chat_completion(messages: list[dict]) -> Any:
+async def get_chat_completion(
+    messages: list[dict], model: str | None = None, max_retries: int = 2
+) -> dict:
     """Sends a chat completion request to the OpenAI API."""
-    response = await client.chat.completions.create(
-        model=config.openai_model,
-        messages=messages,
-        max_completion_tokens=config.openai_max_completion_tokens,
+    model = model or config.openai_model
+    for attempt in range(max_retries + 1):
+        response = await client.chat.completions.create(
+            model=model,
+            messages=messages,
+            max_completion_tokens=config.openai_max_completion_tokens,
+        )
+        choice = response.choices[0] if response.choices else None
+        content = choice.message.content if choice and choice.message else ""
+
+        if content:
+            return {
+                "content": content,
+                "model": response.model,
+                "tokens": response.usage.total_tokens if response.usage else 0,
+            }
+
+        # --- FALLBACK LOGIC START ---
+        # Handle empty response with exponential backoff
+        if attempt < max_retries:
+            wait_time = (attempt + 1) * 2
+            logger.warning(
+                f"Received empty response from OpenAI API. Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{max_retries})",
+                extra={
+                    "attempt": attempt + 1,
+                    "max_retries": max_retries,
+                    "next_retry_delay": wait_time,
+                    "model": model,
+                },
+            )
+            await asyncio.sleep(wait_time)
+            continue
+        # --- FALLBACK LOGIC END ---
+
+    # All retries exhausted
+    raise OpenAIServiceException(
+        message="OpenAI consistently returned an empty response.",
+        status_code=502,
+        error_code="EMPTY_RESPONSE",
     )
-    return response
