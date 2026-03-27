@@ -4,11 +4,12 @@ from sqlmodel import Session
 
 from ..core import config
 from ..models.chat import Conversation
-from .openai_service import get_chat_completion
+from .openai_service import get_chat_completion, handle_openai_errors
 
 logger = logging.getLogger(__name__)
 
 
+@handle_openai_errors
 async def update_conversation_summary(
     engine, conversation_id: str, evicted_messages: list[dict]
 ):
@@ -54,7 +55,7 @@ async def update_conversation_summary(
             UPDATED COMPREHENSIVE SUMMARY:
             """
 
-            # Use a cheaper model or standard gpt-5-mini
+            # Primary attempt with Nano utility model for efficiency
             response = await get_chat_completion(
                 model=config.openai_utility_model,
                 messages=[
@@ -68,7 +69,7 @@ async def update_conversation_summary(
             new_summary = response.get("content")
 
             # --- FALLBACK LOGIC START ---
-            # If Nano returns nothing or a very short/broken response, retry once with Mini
+            # Fallback to Mini if Nano fails quality/presence check
             if not new_summary or len(new_summary.strip()) < 10:
                 logger.warning(
                     f"Nano model ({config.openai_utility_model}) failed to provide a valid summary. Falling back to Mini."
