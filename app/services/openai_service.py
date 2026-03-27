@@ -78,6 +78,7 @@ async def get_chat_completion(
                 "tokens": response.usage.total_tokens if response.usage else 0,
             }
 
+        # --- FALLBACK LOGIC START ---
         # Handle empty response with exponential backoff
         if attempt < max_retries:
             wait_time = (attempt + 1) * 2
@@ -92,6 +93,7 @@ async def get_chat_completion(
             )
             await asyncio.sleep(wait_time)
             continue
+        # --- FALLBACK LOGIC END ---
 
     # All retries exhausted
     raise OpenAIServiceException(

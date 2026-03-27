@@ -16,6 +16,13 @@ async def update_conversation_summary(
     Background task to update the conversation summary with messages
     that were trimmed from the active context.
     """
+    # Don't start the LLM process if the evicted content is too small to matter
+    if len(evicted_messages) < 2 and len(evicted_messages[0].get("content", "")) < 20:
+        logger.debug(
+            f"Skipping summary update for {conversation_id}: content too short."
+        )
+        return
+
     try:
         with Session(engine) as session:
             conv = session.get(Conversation, conversation_id)
@@ -28,21 +35,50 @@ async def update_conversation_summary(
             )
 
             prompt = f"""
-            Update the existing summary with the new conversation details provided.
-            Keep it concise (max 200 words). Focus on key facts and user preferences.
+            You are a specialized memory-compression module. 
+            Your task is to merge NEW DETAILS into an EXISTING SUMMARY.
             
-            EXISTING SUMMARY: {conv.summary or "None"}
-            NEW DETAILS: {new_content}
-            
-            NEW SUMMARY:
+            STRICT RULES:
+            1. Preserve all specific facts (names, technologies, specific numbers).
+            2. Preserve user preferences (e.g., "User prefers Python", "User wants concise answers").
+            3. Delete redundant greetings or filler.
+            4. Keep the output under 200 words.
+            5. Output ONLY the new summary text.
+
+            EXISTING SUMMARY:
+            {conv.summary or "No previous summary."}
+
+            NEW DETAILS TO ADD:
+            {new_content}
+
+            UPDATED COMPREHENSIVE SUMMARY:
             """
 
             # Use a cheaper model or standard gpt-5-mini
             response = await get_chat_completion(
                 model=config.openai_utility_model,
-                messages=[{"role": "user", "content": prompt}],
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are a concise data extraction assistant.",
+                    },
+                    {"role": "user", "content": prompt},
+                ],
             )
             new_summary = response.get("content")
+
+            # --- FALLBACK LOGIC START ---
+            # If Nano returns nothing or a very short/broken response, retry once with Mini
+            if not new_summary or len(new_summary.strip()) < 10:
+                logger.warning(
+                    f"Nano model ({config.openai_utility_model}) failed to provide a valid summary. Falling back to Mini."
+                )
+                response = await get_chat_completion(
+                    model=config.openai_model,  # Use the primary gpt-5-mini
+                    messages=[{"role": "user", "content": prompt}],
+                )
+                new_summary = response.get("content")
+            # --- FALLBACK LOGIC END ---
 
             if new_summary:
                 conv.summary = new_summary
