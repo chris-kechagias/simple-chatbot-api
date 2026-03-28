@@ -105,3 +105,20 @@ async def get_chat_completion(
         status_code=502,
         error_code="EMPTY_RESPONSE",
     )
+
+
+@handle_openai_errors
+async def generate_conversation_title(user_message: str) -> str:
+    """Generates a short title for a conversation from the first user message."""
+    response = await get_chat_completion(
+        messages=[
+            {"role": "system", "content": "Generate short conversation titles."},
+            {
+                "role": "user",
+                "content": f"Summarize this message as a short conversation title. Maximum 6 words. No punctuation:\n\n{user_message}\n\nTitle:",
+            },
+        ],
+        model=config.openai_utility_model,
+        max_retries=1,
+    )
+    return response["content"].strip()
