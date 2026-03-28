@@ -24,7 +24,11 @@ from ..models import (
     ConversationSummary,
     Message,
 )
-from ..services import get_chat_completion, update_conversation_summary
+from ..services import (
+    get_chat_completion,
+    update_conversation_summary,
+    update_conversation_title,
+)
 from ..utils import trim_messages_by_tokens
 
 
@@ -41,11 +45,15 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
     if not request.conversation_id:
         # Create a new conversation if no conversation_id is provided
         conversation = Conversation(
-            user_id=request.user_id, title=request.title or request.user_message[:50]
+            user_id=request.user_id, title=request.title or "New Chat..."
         )
         db.add(conversation)
         db.commit()
         db.refresh(conversation)
+
+        if not request.title:
+            asyncio.create_task(update_conversation_title(engine, conversation.id, request.user_message))
+
         history = []
     else:
         # Retrieve existing conversation
