@@ -21,8 +21,8 @@ class Settings(BaseSettings):
     db_name: str = "chatbot_db"
     start_time: float = time.time()
     openai_api_key: str = ""
-    openai_model: str = "gpt-5-mini"
-    openai_utility_model: str = "gpt-5-nano"
+    openai_model: str = "gpt-5.4-mini"
+    openai_utility_model: str = "gpt-5.4-nano"
     openai_system_prompt: str = ""
     openai_max_completion_tokens: int = 8000
     openai_max_input_tokens: int = 4000
