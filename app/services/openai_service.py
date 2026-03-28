@@ -60,6 +60,47 @@ def handle_openai_errors(
 client = AsyncOpenAI(api_key=config.openai_api_key)
 
 
+async def get_chat_completion_stream(
+    messages: list[dict], model: str | None = None, max_retries: int = 2
+):
+    """Streams a chat completion response from the OpenAI API."""
+    model = model or config.openai_model
+
+    for attempt in range(max_retries + 1):
+        try:
+            response = await client.chat.completions.create(
+                model=model,
+                messages=messages,
+                stream=True,
+                stream_options={"include_usage": True},
+                max_completion_tokens=config.openai_max_completion_tokens,
+            )
+
+            async for chunk in response:
+                yield chunk
+            return  # Successful completion
+
+        except (openai.APIError, openai.APITimeoutError) as e:
+            if attempt < max_retries:
+                wait_time = (attempt + 1) * 2
+                logger.warning(
+                    f"Stream failed to start ({str(e)}). Retrying in {wait_time}s..."
+                )
+                await asyncio.sleep(wait_time)
+                continue
+            raise OpenAIServiceException(
+                message=f"OpenAI stream error: {str(e)}",
+                status_code=getattr(e, "status_code", 502),
+                error_code="OPENAI_STREAM_ERROR",
+            )
+        except Exception as e:
+            raise OpenAIServiceException(
+                message=f"Internal system error processing AI request: {str(e)}",
+                status_code=500,
+                error_code="INTERNAL_SERVER_ERROR",
+            )
+
+
 @handle_openai_errors
 async def get_chat_completion(
     messages: list[dict], model: str | None = None, max_retries: int = 2
