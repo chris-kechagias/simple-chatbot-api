@@ -11,12 +11,11 @@ from sqlmodel import Session
 
 from ..core import config
 from ..models.chat import Conversation
-from .openai_service import get_chat_completion, handle_openai_errors
+from .openai_service import generate_conversation_title, get_chat_completion
 
 logger = logging.getLogger(__name__)
 
 
-@handle_openai_errors
 async def update_conversation_summary(
     engine, conversation_id: str, evicted_messages: list[dict]
 ):
@@ -96,3 +95,20 @@ async def update_conversation_summary(
 
     except Exception as e:
         logger.error(f"Failed to update summary: {e}")
+
+
+async def update_conversation_title(engine, conversation_id, user_message: str):
+    """"""
+    try:
+        with Session(engine) as session:
+            conv = session.get(Conversation, conversation_id)
+            if not conv:
+                return
+            title = await generate_conversation_title(user_message)
+            if title:
+                conv.title = title
+                session.add(conv)
+                session.commit()
+                logger.info(f"Title updated for {conversation_id}: {title}")
+    except Exception as e:
+        logger.error(f"Title generation failed: {e}")
