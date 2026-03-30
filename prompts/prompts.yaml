@@ -1,0 +1,50 @@
+stoic:
+  base: base/default.md
+  core: [identity, persona]
+  rules: [communication, factuality]
+  intensity: medium
+
+casual:
+  base: base/default.md
+  core: [identity]
+  styles: [casual]
+  rules: [communication]
+  intensity: low
+
+formal:
+  base: base/default.md
+  core: [identity, persona]
+  styles: [formal]
+  rules: [communication, factuality]
+  intensity: medium
+
+tutor:
+  base: base/tutor.md
+  core: [identity, persona]
+  rules: [reasoning, communication, factuality]
+  intensity: low
+
+concise:
+  base: base/concise.md
+  core: [identity]
+  rules: [suppression, communication, factuality]
+  intensity: high
+
+sarcastic:
+  base: base/default.md
+  core: [identity, persona]
+  styles: [sarcastic]
+  rules: [communication]
+  intensity: medium
+
+summarizer:
+  base: base/summarizer.md
+  core: [identity]
+  rules: [suppression, factuality]
+  intensity: high
+
+title_generator:
+  base: base/title_generator.md
+  core: [identity]
+  rules: [suppression, factuality]
+  intensity: high
