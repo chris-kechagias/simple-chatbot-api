@@ -9,9 +9,10 @@ and interacts with the corresponding controller functions to perform the necessa
 from uuid import UUID
 
 from fastapi import APIRouter, status
+from fastapi.responses import StreamingResponse
 
 from ..controllers import (
-    chat_controller,
+    chat_streaming_controller,
     delete_conversation_controller,
     get_all_conversations_for_user_controller,
     get_chat_by_id_controller,
@@ -20,7 +21,6 @@ from ..controllers import (
 from ..core import SessionDep
 from ..models import (
     ChatRequest,
-    ChatResponse,
     ConversationSummary,
     Message,
     UpdateTitleRequest,
@@ -69,54 +69,37 @@ async def get_chat_history_router(
 
 @router.post(
     "/",
-    response_model=ChatResponse,
+    response_class=StreamingResponse,  # Tell FastAPI to expect a stream
     status_code=status.HTTP_201_CREATED,
     responses={
         404: {"description": "Conversation not found"},
         500: {"description": "Internal server error"},
     },
     summary="Send a chat message",
-    description="Endpoint to send a chat message to the AI. "
-    "If no conversation ID is provided, a new conversation will be created. "
-    "The response includes the AI's reply and conversation history.",
+    description="Endpoint to send a chat message and stream the response.",
 )
-async def create_chat_router(request: ChatRequest, db: SessionDep) -> ChatResponse:
-    """
-    Start a new conversation and get the first AI response.
-
-    Creates a fresh conversation record, sends the user's message to OpenAI,
-    and returns the AI reply along with the conversation ID. Use the returned
-    conversation_id in subsequent requests to POST /chat/{conversation_id}
-    to continue the conversation.
-    """
+async def create_chat_router(request: ChatRequest, db: SessionDep):
+    # This now uses the streaming controller
     request.conversation_id = None
-    return await chat_controller(request, db)
+    return await chat_streaming_controller(request, db)
 
 
 @router.post(
     "/{conversation_id}",
-    response_model=ChatResponse,
+    response_class=StreamingResponse,  # Use StreamingResponse here too
     status_code=status.HTTP_200_OK,
     responses={
         404: {"description": "Conversation not found"},
         500: {"description": "Internal server error"},
     },
     summary="Send a chat message to an existing conversation",
-    description="Endpoint to send a chat message to an existing conversation. "
-    "The conversation ID must be provided in the URL path. "
-    "The response includes the AI's reply and updated conversation history.",
 )
 async def continue_chat_router(
     conversation_id: UUID, request: ChatRequest, db: SessionDep
-) -> ChatResponse:
-    """
-    Endpoint to continue an existing conversation by sending a new chat message.
-    The conversation ID is provided in the URL path, and the user's message is included in the request body.
-    The controller function will handle retrieving the conversation, interacting with the OpenAI service,
-    and updating the conversation state in the database. If the conversation ID does not exist, a 404 error will be returned.
-    """
+):
+    # This now uses the streaming controller
     request.conversation_id = conversation_id
-    return await chat_controller(request, db)
+    return await chat_streaming_controller(request, db)
 
 
 @router.patch(

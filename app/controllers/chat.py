@@ -9,10 +9,13 @@ It includes error handling to ensure robust operation and clear feedback to API 
 """
 
 import asyncio
+import json
+import logging
 import time
 from datetime import datetime, timezone
 from uuid import UUID
 
+from fastapi.responses import StreamingResponse
 from sqlmodel import select
 
 from ..core import SessionDep, config, engine
@@ -26,10 +29,112 @@ from ..models import (
 )
 from ..services import (
     get_chat_completion,
+    get_chat_completion_stream,
     update_conversation_summary,
     update_conversation_title,
 )
 from ..utils import trim_messages_by_tokens
+
+# Initialize logger for this module
+logger = logging.getLogger(__name__)
+
+
+async def chat_streaming_controller(request: ChatRequest, db: SessionDep):
+    """
+    Handles both new and existing conversations via streaming.
+
+    Creates a new conversation if no conversation_id is provided, or retrieves
+    the existing one. Builds the full message history, streams the OpenAI
+    response, persists the result to the database upon completion, and
+    triggers background utilities.
+
+    Raises ConversationNotFoundException if the provided conversation_id does not exist.
+
+    """
+    # 1. Determine if this is a new conversation
+    is_new_conversation = not request.conversation_id
+
+    if is_new_conversation:
+        conversation = Conversation(
+            user_id=request.user_id, title=request.title or "New Chat..."
+        )
+        db.add(conversation)
+        db.commit()
+        db.refresh(conversation)
+        history = []
+    else:
+        conversation = db.get(Conversation, request.conversation_id)
+        if not conversation:
+            raise ConversationNotFoundException(request.conversation_id)
+
+        # Get history (reversed to get chronological order)
+        history_objs = db.exec(
+            select(Message)
+            .where(Message.conversation_id == conversation.id)
+            .order_by(Message.created_at.desc())
+            .limit(config.context_window_size)
+        ).all()
+        history = list(reversed(history_objs))
+
+    # 2. Build history for OpenAI
+    messages = [{"role": "system", "content": config.openai_system_prompt}]
+    for msg in history:
+        messages.append({"role": "user", "content": msg.user_message})
+        messages.append({"role": "assistant", "content": msg.ai_response})
+    messages.append({"role": "user", "content": request.user_message})
+
+    # 3. The Generator
+    async def stream_generator():
+        full_content = ""
+        metadata = {}
+        start_time = time.perf_counter()
+
+        try:
+            async for chunk in get_chat_completion_stream(messages):
+                # Handle content chunks
+                if chunk.choices and chunk.choices[0].delta.content:
+                    delta = chunk.choices[0].delta.content
+                    full_content += delta
+                    yield f"data: {json.dumps({'content': delta})}\n\n"
+
+                # Handle usage/metadata chunk (usually the last one)
+                if chunk.usage:
+                    metadata = {
+                        "model": chunk.model,
+                        "tokens": chunk.usage.total_tokens,
+                    }
+
+            # 4. STREAM SUCCESSFUL - PERSIST DATA
+            latency_ms = (time.perf_counter() - start_time) * 1000
+
+            # Save the message record
+            new_msg = Message(
+                conversation_id=conversation.id,
+                user_message=request.user_message,
+                ai_response=full_content,
+                ai_model=metadata.get("model", config.openai_model),
+                tokens_used=metadata.get("tokens", 0),
+                latency_ms=latency_ms,
+            )
+            db.add(new_msg)
+            db.commit()
+
+            # 5. POST-CHAT UTILITIES
+            # Only generate title if it's the very first message of a new chat
+            if is_new_conversation:
+                asyncio.create_task(
+                    update_conversation_title(
+                        engine, conversation.id, request.user_message
+                    )
+                )
+
+            yield "data: [DONE]\n\n"
+
+        except Exception as e:
+            logger.error(f"Mid-stream failure: {e}")
+            yield f"data: {json.dumps({'error': 'Stream interrupted'})}\n\n"
+
+    return StreamingResponse(stream_generator(), media_type="text/event-stream")
 
 
 async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
@@ -52,7 +157,9 @@ async def chat_controller(request: ChatRequest, db: SessionDep) -> ChatResponse:
         db.refresh(conversation)
 
         if not request.title:
-            asyncio.create_task(update_conversation_title(engine, conversation.id, request.user_message))
+            asyncio.create_task(
+                update_conversation_title(engine, conversation.id, request.user_message)
+            )
 
         history = []
     else:
