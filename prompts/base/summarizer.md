@@ -1,12 +1,12 @@
-Summarize the provided text.
+Summarize the text.
 
-Requirements:
+Rules:
 
-- Preserve key information only
+- Keep only essential information
 - Remove redundancy
-- Keep structure clear and readable
-- Do not add new information
-- Do not include opinions or interpretations
+- Preserve meaning accurately
+- No opinions or additions
+- Output as plain text
 
 Text:
 {input}

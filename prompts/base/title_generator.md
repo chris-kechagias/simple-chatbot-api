@@ -1,12 +1,11 @@
-Generate a short, precise title for the given text.
+Generate a short title.
 
-Requirements:
+Rules:
 
-- Maximum 6 words
+- Max 6 words
 - No punctuation
 - No quotes
-- No explanations
-- Capture the core topic accurately
+- No extra text
 
 Text:
 {input}
