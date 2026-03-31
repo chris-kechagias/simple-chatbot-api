@@ -8,5 +8,8 @@ Rules:
 - No opinions or additions
 - Output as plain text
 
+Existing summary:
+{existing_summary}
+
 Text:
 {input}
