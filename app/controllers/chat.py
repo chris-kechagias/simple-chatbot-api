@@ -83,6 +83,24 @@ async def chat_streaming_controller(request: ChatRequest, db: SessionDep):
         messages.append({"role": "assistant", "content": msg.ai_response})
     messages.append({"role": "user", "content": request.user_message})
 
+    # Trim messages if they exceed the token limit, and update the conversation summary with evicted messages
+    trimmed_messages = trim_messages_by_tokens(messages, config.openai_max_input_tokens)
+
+    # Identify which messages were evicted (excluding the system prompt and the latest user message)
+    evicted = [m for m in messages[1:-1] if m not in trimmed_messages]
+
+    if evicted:
+        # Update the conversation summary in the background with the evicted messages
+        asyncio.create_task(
+            update_conversation_summary(engine, conversation.id, evicted)
+        )
+
+    if conversation.summary:
+        # If there is an existing summary, append it to the content of the oldest message in the trimmed context
+        trimmed_messages[0]["content"] += (
+            f"\n\nPAST CONTEXT SUMMARY: {conversation.summary}"
+        )
+
     # 3. The Generator
     async def stream_generator():
         full_content = ""
@@ -90,7 +108,7 @@ async def chat_streaming_controller(request: ChatRequest, db: SessionDep):
         start_time = time.perf_counter()
 
         try:
-            async for chunk in get_chat_completion_stream(messages):
+            async for chunk in get_chat_completion_stream(trimmed_messages):
                 # Handle content chunks
                 if chunk.choices and chunk.choices[0].delta.content:
                     delta = chunk.choices[0].delta.content
@@ -116,7 +134,9 @@ async def chat_streaming_controller(request: ChatRequest, db: SessionDep):
                 tokens_used=metadata.get("tokens", 0),
                 latency_ms=latency_ms,
             )
+            conversation.updated_at = datetime.now(timezone.utc)
             db.add(new_msg)
+            db.add(conversation)
             db.commit()
 
             # 5. POST-CHAT UTILITIES
