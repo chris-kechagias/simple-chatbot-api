@@ -12,8 +12,13 @@ from sqlmodel import Session
 from ..core import config
 from ..models.chat import Conversation
 from .openai_service import generate_conversation_title, get_chat_completion
+from .prompt_loader import PromptLoader
 
+# Initialize logger for this module
 logger = logging.getLogger(__name__)
+
+# Initialize loader for this module
+loader = PromptLoader()
 
 
 async def update_conversation_summary(
@@ -41,36 +46,36 @@ async def update_conversation_summary(
                 [f"{m['role']}: {m['content']}" for m in evicted_messages]
             )
 
-            prompt = f"""
-            You are a specialized memory-compression module. 
-            Your task is to merge NEW DETAILS into an EXISTING SUMMARY.
-            
-            STRICT RULES:
-            1. Preserve all specific facts (names, technologies, specific numbers).
-            2. Preserve user preferences (e.g., "User prefers Python", "User wants concise answers").
-            3. Delete redundant greetings or filler.
-            4. Keep the output under 200 words.
-            5. Output ONLY the new summary text.
+            # prompt = f"""
+            # You are a specialized memory-compression module.
+            # Your task is to merge NEW DETAILS into an EXISTING SUMMARY.
+            #
+            # STRICT RULES:
+            # 1. Preserve all specific facts (names, technologies, specific numbers).
+            # 2. Preserve user preferences (e.g., "User prefers Python", "User wants concise answers").
+            # 3. Delete redundant greetings or filler.
+            # 4. Keep the output under 200 words.
+            # 5. Output ONLY the new summary text.
+            #
+            # EXISTING SUMMARY:
+            # {conv.summary or "No previous summary."}
+            #
+            # NEW DETAILS TO ADD:
+            # {new_content}
+            #
+            # UPDATED COMPREHENSIVE SUMMARY:
+            # """
 
-            EXISTING SUMMARY:
-            {conv.summary or "No previous summary."}
-
-            NEW DETAILS TO ADD:
-            {new_content}
-
-            UPDATED COMPREHENSIVE SUMMARY:
-            """
+            prompt = loader.build(
+                "summarizer",
+                input=new_content,
+                existing_summary=conv.summary or "No previous summary.",
+            )
 
             # Primary attempt with Nano utility model for efficiency
             response = await get_chat_completion(
                 model=config.openai_utility_model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a concise data extraction assistant.",
-                    },
-                    {"role": "user", "content": prompt},
-                ],
+                messages=[{"role": "user", "content": prompt}],
             )
             new_summary = response.get("content")
 

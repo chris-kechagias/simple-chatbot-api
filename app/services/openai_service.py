@@ -15,9 +15,13 @@ from openai import AsyncOpenAI
 
 from ..core import config
 from ..core.errors import OpenAIServiceException
+from .prompt_loader import PromptLoader
 
 # Initialize logger for this module
 logger = logging.getLogger(__name__)
+
+# Initialize loader for this module
+loader = PromptLoader()
 
 T = TypeVar("T")
 
@@ -153,11 +157,10 @@ async def generate_conversation_title(user_message: str) -> str:
     """Generates a short title for a conversation from the first user message."""
     response = await get_chat_completion(
         messages=[
-            {"role": "system", "content": "Generate short conversation titles."},
             {
                 "role": "user",
-                "content": f"Summarize this message as a short conversation title. Maximum 6 words. No punctuation:\n\n{user_message}\n\nTitle:",
-            },
+                "content": loader.build("title_generator", input=user_message),
+            }
         ],
         model=config.openai_utility_model,
         max_retries=1,
