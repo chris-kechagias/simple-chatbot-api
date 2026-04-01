@@ -43,7 +43,6 @@ async def update_conversation_summary(
                 [f"{m['role']}: {m['content']}" for m in evicted_messages]
             )
 
-
             prompt = loader.build(
                 "summarizer",
                 input=new_content,
