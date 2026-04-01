@@ -64,6 +64,7 @@ class ChatRequest(SQLModel):
 
     conversation_id: Optional[UUID] = None
     user_id: UUID
+    prompt_key: str | None = None
     user_message: str
     title: Optional[str] = None  # Optional title for the conversation
 
@@ -73,6 +74,7 @@ class ChatResponse(SQLModel):
 
     conversation_id: UUID
     title: Optional[str]
+    prompt_key: str
     ai_response: str
     ai_model: str
     tokens_used: int
