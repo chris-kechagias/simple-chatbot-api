@@ -68,6 +68,8 @@ async def get_chat_completion_stream(
     """Streams a chat completion response from the OpenAI API."""
     model = model or config.openai_model
 
+    chunk_count = 0
+
     for attempt in range(max_retries + 1):
         try:
             response = await client.chat.completions.create(
@@ -79,7 +81,16 @@ async def get_chat_completion_stream(
             )
 
             async for chunk in response:
+                chunk_count += 1
                 yield chunk
+            logger.info(
+                "OpenAI stream iteration completed",
+                extra={
+                    "chunks_delivered": chunk_count,
+                    "provider": "openai",
+                    "model": config.openai_model,
+                },
+            )
             return  # Successful completion
 
         except (openai.APIError, openai.APITimeoutError) as e:
