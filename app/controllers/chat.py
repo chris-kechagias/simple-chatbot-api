@@ -107,8 +107,8 @@ async def chat_streaming_controller(request: ChatRequest, db: SessionDep):
     # 3. The Generator
     async def stream_generator():
         """
-        An async generator that yields real-time AI response chunks via SSE, 
-        persisting the full interaction and triggering post-chat utilities 
+        An async generator that yields real-time AI response chunks via SSE,
+        persisting the full interaction and triggering post-chat utilities
         only after a successful stream completion.
         """
         full_content = ""
@@ -146,6 +146,16 @@ async def chat_streaming_controller(request: ChatRequest, db: SessionDep):
             db.add(new_msg)
             db.add(conversation)
             db.commit()
+
+            logger.info(
+                f"Successfully persisted stream for conversation {conversation.id}",
+                extra={
+                    "conversation_id": str(conversation.id),
+                    "tokens": metadata.get("tokens"),
+                    "latency_ms": f"{latency_ms:.2f}ms",
+                    "is_new": is_new_conversation,
+                },
+            )
 
             # 5. POST-CHAT UTILITIES
             # Only generate title if it's the very first message of a new chat
