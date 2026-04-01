@@ -43,25 +43,6 @@ async def update_conversation_summary(
                 [f"{m['role']}: {m['content']}" for m in evicted_messages]
             )
 
-            # prompt = f"""
-            # You are a specialized memory-compression module.
-            # Your task is to merge NEW DETAILS into an EXISTING SUMMARY.
-            #
-            # STRICT RULES:
-            # 1. Preserve all specific facts (names, technologies, specific numbers).
-            # 2. Preserve user preferences (e.g., "User prefers Python", "User wants concise answers").
-            # 3. Delete redundant greetings or filler.
-            # 4. Keep the output under 200 words.
-            # 5. Output ONLY the new summary text.
-            #
-            # EXISTING SUMMARY:
-            # {conv.summary or "No previous summary."}
-            #
-            # NEW DETAILS TO ADD:
-            # {new_content}
-            #
-            # UPDATED COMPREHENSIVE SUMMARY:
-            # """
 
             prompt = loader.build(
                 "summarizer",
@@ -100,7 +81,7 @@ async def update_conversation_summary(
 
 
 async def update_conversation_title(engine, conversation_id, user_message: str):
-    """"""
+    """Background task to generate and set a title for a newly created conversation."""
     try:
         with Session(engine) as session:
             conv = session.get(Conversation, conversation_id)
