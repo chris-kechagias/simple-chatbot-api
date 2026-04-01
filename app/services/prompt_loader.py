@@ -51,3 +51,6 @@ class PromptLoader:
         prompt = "\n\n".join(p for p in parts if p)
 
         return prompt.format(**kwargs)
+
+
+loader = PromptLoader()

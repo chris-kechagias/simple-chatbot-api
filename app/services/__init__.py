@@ -4,7 +4,7 @@ from .openai_service import (
     get_chat_completion_stream,
     handle_openai_errors,
 )
-from .prompt_loader import PromptLoader
+from .prompt_loader import loader
 from .summarizer import update_conversation_summary, update_conversation_title
 
 __all__ = [
@@ -14,5 +14,5 @@ __all__ = [
     "update_conversation_summary",
     "generate_conversation_title",
     "update_conversation_title",
-    "PromptLoader",
+    "loader",
 ]

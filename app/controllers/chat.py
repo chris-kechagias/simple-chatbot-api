@@ -28,9 +28,9 @@ from ..models import (
     Message,
 )
 from ..services import (
-    PromptLoader,
     get_chat_completion,
     get_chat_completion_stream,
+    loader,
     update_conversation_summary,
     update_conversation_title,
 )
@@ -38,9 +38,6 @@ from ..utils import trim_messages_by_tokens
 
 # Initialize logger for this module
 logger = logging.getLogger(__name__)
-
-# Initialize loader for this module
-loader = PromptLoader()
 
 
 async def chat_streaming_controller(request: ChatRequest, db: SessionDep):

@@ -15,13 +15,11 @@ from openai import AsyncOpenAI
 
 from ..core import config
 from ..core.errors import OpenAIServiceException
-from .prompt_loader import PromptLoader
+from .prompt_loader import loader
 
 # Initialize logger for this module
 logger = logging.getLogger(__name__)
 
-# Initialize loader for this module
-loader = PromptLoader()
 
 T = TypeVar("T")
 

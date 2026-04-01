@@ -12,13 +12,10 @@ from sqlmodel import Session
 from ..core import config
 from ..models.chat import Conversation
 from .openai_service import generate_conversation_title, get_chat_completion
-from .prompt_loader import PromptLoader
+from .prompt_loader import loader
 
 # Initialize logger for this module
 logger = logging.getLogger(__name__)
-
-# Initialize loader for this module
-loader = PromptLoader()
 
 
 async def update_conversation_summary(
