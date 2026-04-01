@@ -28,6 +28,7 @@ from ..models import (
     Message,
 )
 from ..services import (
+    PromptLoader,
     get_chat_completion,
     get_chat_completion_stream,
     update_conversation_summary,
@@ -37,6 +38,9 @@ from ..utils import trim_messages_by_tokens
 
 # Initialize logger for this module
 logger = logging.getLogger(__name__)
+
+# Initialize loader for this module
+loader = PromptLoader()
 
 
 async def chat_streaming_controller(request: ChatRequest, db: SessionDep):
@@ -51,6 +55,10 @@ async def chat_streaming_controller(request: ChatRequest, db: SessionDep):
     Raises ConversationNotFoundException if the provided conversation_id does not exist.
 
     """
+    # Prompt initialization
+    prompt_key = request.prompt_key or "stoic"
+    system_prompt = loader.build(prompt_key)
+
     # 1. Determine if this is a new conversation
     is_new_conversation = not request.conversation_id
 
@@ -77,7 +85,7 @@ async def chat_streaming_controller(request: ChatRequest, db: SessionDep):
         history = list(reversed(history_objs))
 
     # 2. Build history for OpenAI
-    messages = [{"role": "system", "content": config.openai_system_prompt}]
+    messages = [{"role": "system", "content": system_prompt}]
     for msg in history:
         messages.append({"role": "user", "content": msg.user_message})
         messages.append({"role": "assistant", "content": msg.ai_response})
