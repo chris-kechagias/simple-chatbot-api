@@ -23,7 +23,7 @@ A FastAPI-powered conversational AI service using OpenAI, with full conversation
 
 **Phases:**
 - ~~Phase 1 — Core chat API with conversation memory (PostgreSQL)~~ ✅
-- Phase 2 — Full CRUD, context window, auto-title, prompt management & streaming -- in progress
+- ~~Phase 2 — Full CRUD, context window, auto-title, streaming & composable prompt system~~ ✅
 - Phase 3 — RAG over retail inventory data
 
 ---
@@ -37,9 +37,16 @@ simple-chatbot-api/
 │   ├── core/                # Infrastructure (config, database, logging, errors)
 │   ├── routers/             # HTTP layer — thin, no business logic
 │   ├── controllers/         # Business logic & orchestration
-│   ├── services/            # External API clients (OpenAI, summarizer)
+│   ├── services/            # OpenAI client, summarizer, prompt loader
 │   ├── utils/               # Shared utilities (token counting, etc.)
 │   └── models/              # Pydantic & SQLModel schemas
+├── prompts/                 # Composable prompt library
+│   ├── prompts.yaml         # Control layer — defines prompt compositions
+│   ├── base/                # Base prompt templates
+│   ├── core/                # Identity and persona
+│   ├── styles/              # Tone styles (casual, formal, sarcastic)
+│   ├── rules/               # Behavioral rules (communication, factuality, etc.)
+│   └── intensity/           # Intensity calibration (low, medium, high)
 └── tests/                   # Test suite
 ```
 
