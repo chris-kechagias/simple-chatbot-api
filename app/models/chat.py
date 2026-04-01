@@ -74,6 +74,7 @@ class ChatResponse(SQLModel):
 
     conversation_id: UUID
     title: Optional[str]
+    prompt_key: str
     ai_response: str
     ai_model: str
     tokens_used: int
