@@ -50,16 +50,16 @@ async def chat_streaming_controller(request: ChatRequest, db: SessionDep):
     Raises ConversationNotFoundException if the provided conversation_id does not exist.
 
     """
-    # Prompt initialization
-    prompt_key = request.prompt_key or "stoic"
-    system_prompt = loader.build(prompt_key)
-
     # 1. Determine if this is a new conversation
     is_new_conversation = not request.conversation_id
 
     if is_new_conversation:
+        # Prompt initialization
+        active_prompt_key = request.prompt_key or "stoic"
         conversation = Conversation(
-            user_id=request.user_id, title=request.title or "New Chat..."
+            user_id=request.user_id,
+            prompt_key=active_prompt_key,
+            title=request.title or "New Chat...",
         )
         db.add(conversation)
         db.commit()
@@ -70,6 +70,9 @@ async def chat_streaming_controller(request: ChatRequest, db: SessionDep):
         if not conversation:
             raise ConversationNotFoundException(request.conversation_id)
 
+        # Use the prompt_key from the request if provided, otherwise fall back to the conversation's existing prompt_key, and finally default to "stoic" if neither is set
+        active_prompt_key = request.prompt_key or conversation.prompt_key or "stoic"
+
         # Get history (reversed to get chronological order)
         history_objs = db.exec(
             select(Message)
@@ -78,6 +81,9 @@ async def chat_streaming_controller(request: ChatRequest, db: SessionDep):
             .limit(config.context_window_size)
         ).all()
         history = list(reversed(history_objs))
+
+    # Resolve final prompt and build system prompt
+    system_prompt = loader.build(active_prompt_key)
 
     # 2. Build history for OpenAI
     messages = [{"role": "system", "content": system_prompt}]
@@ -173,6 +179,23 @@ async def chat_streaming_controller(request: ChatRequest, db: SessionDep):
             yield f"data: {json.dumps({'error': 'Stream interrupted'})}\n\n"
 
     return StreamingResponse(stream_generator(), media_type="text/event-stream")
+
+
+async def get_chat_by_id_controller(
+    conversation_id: UUID, db: SessionDep
+) -> list[Message]:
+    """
+    Retrieves a conversation and its message history by conversation ID.
+
+    Raises ConversationNotFoundException if the conversation does not exist.
+    """
+    conversation = db.get(Conversation, conversation_id)
+    if not conversation:
+        raise ConversationNotFoundException(conversation_id)
+
+    return db.exec(
+        select(Message).where(Message.conversation_id == conversation.id)
+    ).all()
 
 
 async def get_all_conversations_for_user_controller(
