@@ -20,6 +20,7 @@ class Conversation(SQLModel, table=True):
 
     id: Optional[UUID] = Field(default_factory=uuid4, primary_key=True)
     user_id: UUID
+    prompt_key: Optional[str] = Field(default="stoic")
     title: Optional[str] = None
     summary: Optional[str] = Field(default=None, sa_column=Column(Text))
     created_at: datetime = Field(
