@@ -23,7 +23,6 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-5.4-mini"
     openai_utility_model: str = "gpt-5.4-nano"
-    openai_system_prompt: str = ""
     openai_max_completion_tokens: int = 8000
     openai_max_input_tokens: int = 4000
     context_window_size: int = 15
