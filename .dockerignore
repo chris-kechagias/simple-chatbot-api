@@ -1,0 +1,11 @@
+*
+
+!pyproject.toml
+!uv.lock
+!main.py
+!app/
+!prompts/
+
+tests/
+.coverage
+.pytest_cache/
