@@ -5,6 +5,7 @@
 ![SQLModel](https://img.shields.io/badge/SQLModel-ORM-red?style=flat-square)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-336791?style=flat-square&logo=postgresql)
 ![OpenAI](https://img.shields.io/badge/OpenAI-API-412991?style=flat-square&logo=openai)
+![Docker](https://img.shields.io/badge/Docker-ready-2496ED?style=flat-square&logo=docker)
 ![uv](https://img.shields.io/badge/uv-package%20manager-blueviolet?style=flat-square)
 
 ## Status
@@ -19,7 +20,7 @@
 
 ## About
 
-A FastAPI-powered conversational AI service using OpenAI, with full conversation management and RAG-based retail inventory assistance. Part of a larger portfolio project — built incrementally, PR by PR.
+A FastAPI-powered conversational AI service using OpenAI, with full conversation management, streaming responses, token-based context trimming, rolling summarization, and a composable prompt system. Part of a larger portfolio project — built incrementally, PR by PR.
 
 **Phases:**
 - ~~Phase 1 — Core chat API with conversation memory (PostgreSQL)~~ ✅
@@ -33,6 +34,8 @@ A FastAPI-powered conversational AI service using OpenAI, with full conversation
 ```
 simple-chatbot-api/
 ├── main.py                  # App launcher
+├── Dockerfile               # Container image definition
+├── docker-compose.yml       # Multi-service orchestration (API + PostgreSQL)
 ├── app/
 │   ├── core/                # Infrastructure (config, database, logging, errors)
 │   ├── routers/             # HTTP layer — thin, no business logic
@@ -54,12 +57,31 @@ simple-chatbot-api/
 
 ## Installation
 
-### Prerequisites
-- Python 3.11+
-- PostgreSQL
-- An OpenAI API key
+### Option A — Docker (recommended)
 
-### Setup
+1. Clone the repo:
+```bash
+git clone https://github.com/chris-kechagias/simple-chatbot-api.git
+cd simple-chatbot-api
+```
+
+2. Copy the example env file and fill in your values:
+```bash
+cp .env.example .env
+```
+
+3. Build and start:
+```bash
+docker compose up --build
+```
+
+The API will be available at `http://localhost:8000`.
+
+---
+
+### Option B — Local
+
+**Prerequisites:** Python 3.11+, PostgreSQL, an OpenAI API key
 
 1. Clone the repo and install dependencies:
 ```bash
@@ -78,6 +100,8 @@ cp .env.example .env
 task dev
 ```
 
+---
+
 ### First Request
 
 This API has no authentication yet. Every request requires a `user_id` UUID that you generate yourself — think of it as your user identifier until auth is added.
@@ -90,7 +114,6 @@ python -c "import uuid; print(uuid.uuid4())"
 Use that UUID as `user_id` in all your requests. For new conversations, set `conversation_id` to `null` or omit it entirely.
 
 ---
-
 
 ## Author
 
