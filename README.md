@@ -72,7 +72,16 @@ cp .env.example .env
 
 3. Build and start:
 ```bash
-docker compose up --build
+task build       # build image and start containers (detached)
+task start       # start without rebuilding
+task stop        # stop containers
+task restart     # stop and restart
+task logs        # follow container logs
+```
+
+Or using Docker directly:
+```bash
+docker compose up --build -d
 ```
 
 The API will be available at `http://localhost:8000`.
