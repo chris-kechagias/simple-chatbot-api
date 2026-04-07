@@ -43,7 +43,12 @@ Thumbs.db
 
 # Temp Files
 temp-notes.md
+temp-snippets.md
 PROMPTS.md
+
+# Postman
+.postman/
+postman/
 
 # Logs
 logs/

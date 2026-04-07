@@ -21,6 +21,7 @@ from app.core.errors import (
     generic_exception_handler,
     validation_exception_handler,
 )
+from app.middleware import security_headers_middleware  # noqa: F401
 from app.routers import chat_router, health_router, home_router
 
 logger = logging.getLogger(__name__)
@@ -53,6 +54,8 @@ app = FastAPI(
     lifespan=lifespan,
     swagger_ui_parameters={"docExpansion": "none"},
 )
+
+app.middleware("http")(security_headers_middleware)
 
 app.include_router(health_router)
 app.include_router(home_router)
