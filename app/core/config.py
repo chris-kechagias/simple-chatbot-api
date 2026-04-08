@@ -11,6 +11,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """Application configuration settings."""
     app_name: str = "Simple Chatbot API"
     version: str = "0.0.0"
     debug: bool = False
