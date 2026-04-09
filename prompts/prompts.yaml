@@ -1,21 +1,21 @@
 stoic:
   base: base/default.md
   core: [identity, persona]
-  rules: [communication, factuality]
+  rules: [communication, factuality, formatting]
   intensity: medium
 
 casual:
   base: base/default.md
   core: [identity]
   styles: [casual]
-  rules: [communication]
+  rules: [communication, formatting]
   intensity: low
 
 formal:
   base: base/default.md
   core: [identity, persona]
   styles: [formal]
-  rules: [communication, factuality]
+  rules: [communication, factuality, formatting]
   intensity: medium
 
 tutor:
@@ -34,7 +34,7 @@ sarcastic:
   base: base/default.md
   core: [identity, persona]
   styles: [sarcastic]
-  rules: [communication]
+  rules: [communication, formatting]
   intensity: medium
 
 summarizer:
