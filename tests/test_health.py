@@ -12,6 +12,6 @@ def test_health():
 
     data = response.json()
     assert data["status"] == "ok"
+    assert "version" in data
     assert "uptime" in data
     assert isinstance(data["uptime"], float)
-    assert "version" in data
