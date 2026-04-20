@@ -178,3 +178,29 @@ def test_continue_chat_internal_server_error(mock_openai, client, session):
     )
     assert response.status_code == 200
     assert "Stream interrupted" in response.text
+
+
+def test_update_conversation_title(client, session):
+    """Verifies that the title of an existing conversation can be updated"""
+    # Create a conversation directly in the test DB
+    conv = Conversation(user_id=uuid4(), prompt_key="stoic", title="Old Title")
+    session.add(conv)
+    session.commit()
+
+    response = client.patch(
+        f"/chat/{conv.id}/title",
+        json={"title": "New Custom Title"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == str(conv.id)
+    assert data["title"] == "New Custom Title"
+
+
+def test_update_conversation_title_not_found(client):
+    """Verifies that updating the title of a non-existent conversation returns a 404 error"""
+    response = client.patch(
+        f"/chat/{uuid4()}/title",
+        json={"title": "This should fail because the conversation ID does not exist."},
+    )
+    assert response.status_code == 404
