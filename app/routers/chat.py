@@ -72,7 +72,9 @@ async def get_chat_history_router(
     response_class=StreamingResponse,  # Tell FastAPI to expect a stream
     status_code=status.HTTP_200_OK,
     responses={
-        500: {"description": "Internal server error"},
+        500: {
+            "description": "Internal server error during chat processing or stream generation."
+        },
     },
     summary="Send a chat message",
     description="Endpoint to send a chat message and stream the response.",

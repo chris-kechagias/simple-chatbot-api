@@ -1,5 +1,4 @@
-# from unittest.mock import patch, MagicMock
-
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 from app.models import Conversation, Message
@@ -78,3 +77,58 @@ def test_get_chat_history_invalid_id(client):
     """Returns 422 when conversation_id is not a valid UUID"""
     response = client.get("/chat/not-a-uuid")
     assert response.status_code == 422
+
+
+# ----------------------------------------------------
+# 2. TEST -> WRITE ROUTES - (POST/PATCH/DELETE)
+# ----------------------------------------------------
+
+
+async def mock_streaming_response():
+    """Mock streaming response generator for testing"""
+    chunk = MagicMock()
+    chunk.choices = [MagicMock()]
+    chunk.choices[0].delta.content = "Hello. This is a streamed response."
+    chunk.usage = None
+    yield chunk
+
+    # Last chunk with usage info
+    last = MagicMock()
+    last.choices = [MagicMock()]
+    last.choices[0].delta.content = None
+    last.usage = MagicMock()
+    last.model = "gpt-5.4-mini"
+    yield last
+
+
+@patch(
+    "app.controllers.chat.get_chat_completion_stream",
+    return_value=mock_streaming_response(),
+)
+def test_create_chat(mock_openai, client):
+    """Tests the /chat POST endpoint with a mocked streaming response"""
+    response = client.post(
+        "/chat/",
+        json={
+            "user_id": str(uuid4()),
+            "user_message": "Hello. This is a streamed response.",
+        },
+    )
+    assert response.status_code == 200
+
+
+@patch(
+    "app.controllers.chat.get_chat_completion_stream",
+    side_effect=Exception("OpenAI API error"),
+)
+def test_create_chat_internal_server_error(mock_openai, client):
+    """Tests that the /chat POST endpoint returns a 500 status code when an exception occurs during streaming"""
+    response = client.post(
+        "/chat/",
+        json={
+            "user_id": str(uuid4()),
+            "user_message": "This will trigger an internal server error.",
+        },
+    )
+    assert response.status_code == 200
+    assert "Stream interrupted" in response.text
