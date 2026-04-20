@@ -1,12 +1,16 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from app.services import update_conversation_summary
 
+# ----------------------------------------------------
+# 1. TEST -> UPDATE SUMMARY BACKGROUND TASK
+# ----------------------------------------------------
+
 
 @pytest.mark.asyncio
-@patch("app.services.summarizer.get_chat_completion")
+@patch("app.services.summarizer.get_chat_completion", new_callable=AsyncMock)
 @patch("app.services.summarizer.loader.build")
 @patch("app.services.summarizer.Session")
 async def test_update_conversation_summary_nano_success(
@@ -51,7 +55,7 @@ async def test_update_conversation_summary_nano_success(
 
 
 @pytest.mark.asyncio
-@patch("app.services.summarizer.get_chat_completion")
+@patch("app.services.summarizer.get_chat_completion", new_callable=AsyncMock)
 @patch("app.services.summarizer.loader.build")
 @patch("app.services.summarizer.Session")
 async def test_update_conversation_summary_mini_fallback(
@@ -107,7 +111,7 @@ async def test_update_conversation_summary_skips_short_content():
 
 
 @pytest.mark.asyncio
-@patch("app.services.summarizer.get_chat_completion")
+@patch("app.services.summarizer.get_chat_completion", new_callable=AsyncMock)
 @patch("app.services.summarizer.Session")
 async def test_update_conversation_summary_conv_not_found(
     mock_session, mock_completion
@@ -134,3 +138,8 @@ async def test_update_conversation_summary_conv_not_found(
 
     # assert that the function returns early without trying to generate a summary
     mock_completion.assert_not_called()
+
+
+# ----------------------------------------------------
+# 2. TEST -> UPDATE TITLE BACKGROUND TASK
+# ----------------------------------------------------
