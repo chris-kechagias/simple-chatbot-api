@@ -70,9 +70,8 @@ async def get_chat_history_router(
 @router.post(
     "/",
     response_class=StreamingResponse,  # Tell FastAPI to expect a stream
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
     responses={
-        404: {"description": "Conversation not found"},
         500: {"description": "Internal server error"},
     },
     summary="Send a chat message",
