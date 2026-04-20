@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from app.services import update_conversation_summary
+from app.services import update_conversation_summary, update_conversation_title
 
 # ----------------------------------------------------
 # 1. TEST -> UPDATE SUMMARY BACKGROUND TASK
@@ -143,3 +143,49 @@ async def test_update_conversation_summary_conv_not_found(
 # ----------------------------------------------------
 # 2. TEST -> UPDATE TITLE BACKGROUND TASK
 # ----------------------------------------------------
+
+
+@pytest.mark.asyncio
+@patch("app.services.summarizer.generate_conversation_title", new_callable=AsyncMock)
+@patch("app.services.summarizer.Session")
+async def test_update_conversation_title_success(mock_session, mock_generate_title):
+    """Tests that the conversation title is successfully updated when a valid title is generated."""
+    # configure the mock to return a conversation with no title
+    mock_conv = MagicMock()
+    mock_conv.title = None
+    mock_session.return_value.__enter__.return_value.get.return_value = mock_conv
+
+    # configure the title generator to return a valid title
+    mock_generate_title.return_value = "Generated Conversation Title"
+
+    # call the function under test
+    await update_conversation_title(
+        MagicMock(),
+        "some-id",
+        "This is a user message long enough  to generate a title.",
+    )
+
+    # assert that the conversation title was updated and saved
+    assert mock_conv.title == "Generated Conversation Title"
+    mock_generate_title.assert_called_once()
+
+
+@pytest.mark.asyncio
+@patch("app.services.summarizer.generate_conversation_title", new_callable=AsyncMock)
+@patch("app.services.summarizer.Session")
+async def test_update_conversation_title_conv_not_found(
+    mock_session, mock_generate_title
+):
+    """Tests that the title update function returns early without trying to generate a title when the conversation is not found in the database."""
+    # configure the mock to not return any conversation
+    mock_session.return_value.__enter__.return_value.get.return_value = None
+
+    # call the function under test
+    await update_conversation_title(
+        MagicMock(),
+        "some-id",
+        "This is a user message long enough  to generate a title.",
+    )
+
+    # assert that the function returns early without trying to generate a title
+    mock_generate_title.assert_not_called()
