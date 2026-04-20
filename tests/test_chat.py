@@ -204,3 +204,20 @@ def test_update_conversation_title_not_found(client):
         json={"title": "This should fail because the conversation ID does not exist."},
     )
     assert response.status_code == 404
+
+
+def test_delete_conversation(client, session):
+    """Verifies that an existing conversation can be deleted"""
+    # Create a conversation directly in the test DB
+    conv = Conversation(user_id=uuid4(), prompt_key="stoic", title="Old Title")
+    session.add(conv)
+    session.commit()
+
+    response = client.delete(f"/chat/{conv.id}")
+    assert response.status_code == 204
+
+
+def test_delete_conversation_not_found(client):
+    """Verifies that deleting a non-existent conversation returns a 404 error"""
+    response = client.delete(f"/chat/{uuid4()}")
+    assert response.status_code == 404
