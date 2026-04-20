@@ -94,7 +94,7 @@ async def mock_streaming_response():
     return_value=mock_streaming_response(),
 )
 def test_create_chat(mock_openai, client):
-    """Tests the /chat POST endpoint with a mocked streaming response"""
+    """Verifies that a new conversation is created and the stream returns content when a valid request is made"""
     response = client.post(
         "/chat/",
         json={
@@ -110,12 +110,70 @@ def test_create_chat(mock_openai, client):
     side_effect=Exception("OpenAI API error"),
 )
 def test_create_chat_internal_server_error(mock_openai, client):
-    """Tests that the /chat POST endpoint returns a 500 status code when an exception occurs during streaming"""
+    """Verifies that a mid-stream failure yields an error event in the response body"""
     response = client.post(
         "/chat/",
         json={
             "user_id": str(uuid4()),
             "user_message": "This will trigger an internal server error.",
+        },
+    )
+    assert response.status_code == 200
+    assert "Stream interrupted" in response.text
+
+
+@patch(
+    "app.controllers.chat.get_chat_completion_stream",
+    return_value=mock_streaming_response(),
+)
+def test_continue_chat(mock_openai, client, session):
+    """Verifies that a message can be sent to an existing conversation"""
+    # Create a conversation directly in the test DB
+    conv = Conversation(user_id=uuid4(), prompt_key="stoic", title="Continue Chat Test")
+    session.add(conv)
+    session.commit()
+
+    response = client.post(
+        f"/chat/{conv.id}",
+        json={
+            "user_id": str(uuid4()),
+            "conversation_id": str(conv.id),
+            "user_message": "Continuing the conversation with a new message.",
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_continue_chat_not_found(client):
+    """Verifies that sending a message to a non-existent conversation returns a 404 error"""
+    response = client.post(
+        f"/chat/{uuid4()}",
+        json={
+            "user_id": str(uuid4()),
+            "conversation_id": str(uuid4()),
+            "user_message": "This should fail because the conversation ID does not exist.",
+        },
+    )
+    assert response.status_code == 404
+
+
+@patch(
+    "app.controllers.chat.get_chat_completion_stream",
+    side_effect=Exception("OpenAI API error"),
+)
+def test_continue_chat_internal_server_error(mock_openai, client, session):
+    """Verifies that a mid-stream failure yields an error event in the response body when continuing a conversation"""
+    # Create a conversation directly in the test DB
+    conv = Conversation(user_id=uuid4(), prompt_key="stoic", title="Continue Chat Test")
+    session.add(conv)
+    session.commit()
+
+    response = client.post(
+        f"/chat/{conv.id}",
+        json={
+            "user_id": str(uuid4()),
+            "conversation_id": str(conv.id),
+            "user_message": "This will trigger an internal server error when continuing the conversation.",
         },
     )
     assert response.status_code == 200
