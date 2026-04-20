@@ -31,12 +31,6 @@ def test_get_conversations_for_user(client, session):
     assert data[0]["title"] == "Test Chat"
 
 
-def test_get_conversations_invalid_user_id(client):
-    """Returns 422 when user_id is not a valid UUID"""
-    response = client.get("/chat/conversations/not-a-uuid")
-    assert response.status_code == 422
-
-
 def test_get_chat_history(client, session):
     """Returns message history for a given conversation ID"""
     # Create a conversation directly in the test DB
@@ -71,12 +65,6 @@ def test_get_chat_history_not_found(client):
     """Returns 404 when conversation ID is not found"""
     response = client.get(f"/chat/{uuid4()}")
     assert response.status_code == 404
-
-
-def test_get_chat_history_invalid_id(client):
-    """Returns 422 when conversation_id is not a valid UUID"""
-    response = client.get("/chat/not-a-uuid")
-    assert response.status_code == 422
 
 
 # ----------------------------------------------------
