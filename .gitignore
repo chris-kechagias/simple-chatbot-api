@@ -53,3 +53,8 @@ postman/
 # Logs
 logs/
 *.log
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
